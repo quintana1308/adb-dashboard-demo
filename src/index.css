@@ -1,0 +1,76 @@
+@import "tailwindcss";
+
+/* Variables de colores para Demo */
+:root {
+  --purolomo-red: #3b82f6;
+  --purolomo-red-hover: #2563eb;
+  --purolomo-red-active: #1d4ed8;
+  --purolomo-green: #10b981;
+  --purolomo-green-hover: #059669;
+  --purolomo-green-active: #047857;
+}
+
+/* Clases utilitarias para colores de marca */
+.bg-purolomo-red {
+  background-color: var(--purolomo-red);
+}
+
+.bg-purolomo-red:hover {
+  background-color: var(--purolomo-red-hover);
+}
+
+.bg-purolomo-red:active {
+  background-color: var(--purolomo-red-active);
+}
+
+.bg-purolomo-green {
+  background-color: var(--purolomo-green);
+}
+
+.bg-purolomo-green:hover {
+  background-color: var(--purolomo-green-hover);
+}
+
+.bg-purolomo-green:active {
+  background-color: var(--purolomo-green-active);
+}
+
+.text-purolomo-red {
+  color: var(--purolomo-red);
+}
+
+.text-purolomo-green {
+  color: var(--purolomo-green);
+}
+
+.border-purolomo-red {
+  border-color: var(--purolomo-red);
+}
+
+.border-purolomo-green {
+  border-color: var(--purolomo-green);
+}
+
+/* Estilos base personalizados */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Animación shimmer para skeleton loaders */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
