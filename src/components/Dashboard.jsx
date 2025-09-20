@@ -198,6 +198,21 @@ const Dashboard = () => {
                       <div className="text-sm text-gray-500">Tabla de rentabilidad con filtros</div>
                     </div>
                   </button>
+                  <button
+                    onClick={() => {
+                      navigate('/dashboard/finanzas/egresos')
+                      setShowFinanzasDropdown(false)
+                    }}
+                    className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors flex items-center space-x-3"
+                  >
+                    <div className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center">
+                      <HiOutlineCurrencyDollar className="w-4 h-4 text-slate-700" />
+                    </div>
+                    <div>
+                      <div className="font-medium text-gray-900">Egresos Operativos</div>
+                      <div className="text-sm text-gray-500">Gestión de gastos y egresos</div>
+                    </div>
+                  </button>
                 </div>
               </div>
             )}

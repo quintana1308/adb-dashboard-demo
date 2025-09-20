@@ -12,6 +12,7 @@ import ActivacionAliadosMarcas from './components/ActivacionAliadosMarcas'
 import ActivacionAliadosSku from './components/ActivacionAliadosSku'
 import FinanzasRentabilidad from './components/FinanzasRentabilidad'
 import FinanzasCobranza from './components/FinanzasCobranza'
+import FinanzasEgresos from './components/FinanzasEgresos'
 
 // Componente para rutas protegidas
 const ProtectedRoute = ({ children }) => {
@@ -148,6 +149,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <FinanzasCobranza />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/dashboard/finanzas/egresos" 
+            element={
+              <ProtectedRoute>
+                <FinanzasEgresos />
               </ProtectedRoute>
             } 
           />

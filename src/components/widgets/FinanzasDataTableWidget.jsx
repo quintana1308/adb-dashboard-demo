@@ -77,6 +77,13 @@ const FinanzasDataTableWidget = forwardRef(({
       if (filtros.diavisita !== undefined) params.p_diavisita = filtros.diavisita === 'All' ? null : filtros.diavisita
       if (filtros.codigoruta !== undefined) params.p_codigoruta = filtros.codigoruta === 'All' ? null : filtros.codigoruta
       
+      // Filtros de egresos
+      if (filtros.dia !== undefined) params.p_dia = filtros.dia === 'All' ? null : filtros.dia
+      if (filtros.clasificacion !== undefined) params.p_clasificacion = filtros.clasificacion === 'All' ? null : filtros.clasificacion
+      if (filtros.cuenta !== undefined) params.p_cuenta = filtros.cuenta === 'All' ? null : filtros.cuenta
+      if (filtros.centrodecosto !== undefined) params.p_centrodecosto = filtros.centrodecosto === 'All' ? null : filtros.centrodecosto
+      if (filtros.nivelcuenta !== undefined) params.p_nivelcuenta = filtros.nivelcuenta === 'All' ? null : filtros.nivelcuenta
+      
       // Filtros comunes
       if (filtros.cliente !== undefined) params.p_cliente = filtros.cliente === 'All' ? null : filtros.cliente
       if (filtros.vendedor !== undefined) params.p_vendedor = filtros.vendedor === 'All' ? null : filtros.vendedor
@@ -212,9 +219,21 @@ const FinanzasDataTableWidget = forwardRef(({
 
   const formatValue = (value, column) => {
     if (value === null || value === undefined) return '-'
-    if (typeof value === 'number' && (column.key === 'venta_bruta' || column.key === 'costo_bruto')) {
+    
+    // Campos monetarios que necesitan formato de número
+    const monetaryFields = ['venta_bruta', 'costo_bruto', 'saldo', 'valorvencido', 'gastosgenerales']
+    
+    if (typeof value === 'number' && monetaryFields.includes(column.key)) {
       return value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
     }
+    
+    // Formatear fechas
+    if (column.key === 'dia' || column.key === 'fechadocumento') {
+      if (value && typeof value === 'string') {
+        return new Date(value).toLocaleDateString()
+      }
+    }
+    
     return value
   }
 
