@@ -66,7 +66,7 @@ Este proceso puede tardar varios minutos la primera vez, ya que descarga todas l
 Este paso es necesario para poder sincronizar datos y esquemas entre tu entorno local y el proyecto remoto:
 
 ```bash
-supabase link --project-ref vgszusyipzoptbyvcjfo
+supabase link --project-ref efmdfbokgrgwmxzvqvio
 ```
 
 Se te pedirá un token de acceso. Para obtenerlo:
@@ -174,7 +174,7 @@ Si el script de sincronización falla:
 
 1. Asegúrate de que Supabase esté en ejecución (`supabase status`)
 2. Verifica que tienes la contraseña correcta de la base de datos remota
-3. Comprueba que el proyecto está correctamente vinculado (`supabase link --project-ref vgszusyipzoptbyvcjfo`)
+3. Comprueba que el proyecto está correctamente vinculado (`supabase link --project-ref efmdfbokgrgwmxzvqvio`)
 
 ### Errores de duplicación de datos
 

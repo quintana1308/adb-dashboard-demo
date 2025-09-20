@@ -59,22 +59,31 @@ const FinanzasDataTableWidget = forwardRef(({
     try {
       const pageToFetch = isInitial ? 1 : page
 
-      // PRUEBA SIMPLIFICADA: Llamar con todos los parámetros como null
-      console.log('=== PRUEBA DIRECTA ===')
-      console.log('Calling RPC function:', rpcFunction)
+      // Preparar parámetros usando los filtros reales
+      const params = {
+        p_page: pageToFetch,
+        p_page_size: pageSize,
+        p_sort_column: sorting.column,
+        p_sort_direction: sorting.direction
+      }
       
-      const { data: result, error: rpcError } = await supabase.rpc(rpcFunction, {
-        p_anio: null,
-        p_mes: null,
-        p_cliente: null,
-        p_vendedor: null,
-        p_categoria: null,
-        p_producto: null,
-        p_page: 1,
-        p_page_size: 10,
-        p_sort_column: 'anio',
-        p_sort_direction: 'ASC'
-      })
+      // Filtros de rentabilidad
+      if (filtros.anio !== undefined) params.p_anio = filtros.anio === 'All' ? null : filtros.anio
+      if (filtros.mes !== undefined) params.p_mes = filtros.mes === 'All' ? null : filtros.mes
+      if (filtros.categoria !== undefined) params.p_categoria = filtros.categoria === 'All' ? null : filtros.categoria
+      if (filtros.producto !== undefined) params.p_producto = filtros.producto === 'All' ? null : filtros.producto
+      
+      // Filtros de cobranza
+      if (filtros.diavisita !== undefined) params.p_diavisita = filtros.diavisita === 'All' ? null : filtros.diavisita
+      if (filtros.codigoruta !== undefined) params.p_codigoruta = filtros.codigoruta === 'All' ? null : filtros.codigoruta
+      
+      // Filtros comunes
+      if (filtros.cliente !== undefined) params.p_cliente = filtros.cliente === 'All' ? null : filtros.cliente
+      if (filtros.vendedor !== undefined) params.p_vendedor = filtros.vendedor === 'All' ? null : filtros.vendedor
+
+      console.log('Calling RPC function:', rpcFunction, 'with params:', params)
+      
+      const { data: result, error: rpcError } = await supabase.rpc(rpcFunction, params)
       
       console.log('RPC result:', result)
       console.log('RPC error:', rpcError)
@@ -128,31 +137,56 @@ const FinanzasDataTableWidget = forwardRef(({
   const fetchTotals = async () => {
     if (!totalsRpcFunction || !onTotalsChange) return
     try {
-      const params = {
-        p_anio: filtros.anio === 'All' ? null : filtros.anio,
-        p_mes: filtros.mes === 'All' ? null : filtros.mes,
-        p_cliente: filtros.cliente === 'All' ? null : filtros.cliente,
-        p_vendedor: filtros.vendedor === 'All' ? null : filtros.vendedor,
-        p_categoria: filtros.categoria === 'All' ? null : filtros.categoria,
-        p_producto: filtros.producto === 'All' ? null : filtros.producto
-      }
+      // Construir parámetros dinámicamente basándose en los filtros disponibles
+      const params = {}
+      
+      // Filtros de rentabilidad
+      if (filtros.anio !== undefined) params.p_anio = filtros.anio === 'All' ? null : filtros.anio
+      if (filtros.mes !== undefined) params.p_mes = filtros.mes === 'All' ? null : filtros.mes
+      if (filtros.categoria !== undefined) params.p_categoria = filtros.categoria === 'All' ? null : filtros.categoria
+      if (filtros.producto !== undefined) params.p_producto = filtros.producto === 'All' ? null : filtros.producto
+      
+      // Filtros de cobranza
+      if (filtros.diavisita !== undefined) params.p_diavisita = filtros.diavisita === 'All' ? null : filtros.diavisita
+      if (filtros.codigoruta !== undefined) params.p_codigoruta = filtros.codigoruta === 'All' ? null : filtros.codigoruta
+      
+      // Filtros comunes
+      if (filtros.cliente !== undefined) params.p_cliente = filtros.cliente === 'All' ? null : filtros.cliente
+      if (filtros.vendedor !== undefined) params.p_vendedor = filtros.vendedor === 'All' ? null : filtros.vendedor
 
       console.log('Calling totals RPC with params:', params)
       const { data: result, error: rpcError } = await supabase.rpc(totalsRpcFunction, params)
       console.log('Totals RPC result:', result, 'Error:', rpcError)
-      console.log('Totals result[0]:', result?.[0])
-      console.log('Totals result raw:', JSON.stringify(result))
+      
       if (rpcError) throw rpcError
-      const totals = result && result[0] ? result[0] : { venta_bruta_total: 0, costo_bruto_total: 0, utilidad_pct: 0 }
+      
+      const totals = result && result[0] ? result[0] : {}
       console.log('Processed totals:', totals)
-      onTotalsChange({
-        ventaBrutaTotal: totals.venta_bruta_total ?? 0,
-        costoBrutoTotal: totals.costo_bruto_total ?? 0,
-        utilidadPct: totals.utilidad_pct ?? 0
-      })
+      
+      // Manejar diferentes tipos de totales
+      if (totals.venta_bruta_total !== undefined) {
+        // Totales de rentabilidad
+        onTotalsChange({
+          ventaBrutaTotal: totals.venta_bruta_total ?? 0,
+          costoBrutoTotal: totals.costo_bruto_total ?? 0,
+          utilidadPct: totals.utilidad_pct ?? 0
+        })
+      } else if (totals.saldo_total !== undefined) {
+        // Totales de cobranza
+        onTotalsChange({
+          saldoTotal: totals.saldo_total ?? 0,
+          valorVencidoTotal: totals.valor_vencido_total ?? 0,
+          porcentajeVencimiento: totals.porcentaje_vencimiento ?? 0
+        })
+      }
     } catch (err) {
-      console.error('Error cargando totales de rentabilidad:', err)
-      onTotalsChange?.({ ventaBrutaTotal: 0, costoBrutoTotal: 0, utilidadPct: 0 })
+      console.error('Error cargando totales:', err)
+      // Proporcionar valores por defecto según el tipo de función
+      if (totalsRpcFunction.includes('rentabilidad')) {
+        onTotalsChange?.({ ventaBrutaTotal: 0, costoBrutoTotal: 0, utilidadPct: 0 })
+      } else if (totalsRpcFunction.includes('cobranza')) {
+        onTotalsChange?.({ saldoTotal: 0, valorVencidoTotal: 0, porcentajeVencimiento: 0 })
+      }
     }
   }
 

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { getCurrentUser } from '../lib/supabase'
 import { useNavigate } from 'react-router-dom'
 import { ChevronDown } from 'lucide-react'
-import { HiOutlineChartBar, HiOutlineUserAdd, HiOutlineCurrencyDollar } from 'react-icons/hi'
+import { HiOutlineChartBar, HiOutlineUserAdd, HiOutlineCurrencyDollar, HiOutlineClipboardList } from 'react-icons/hi'
 import fondoImg from '../assets/fondo.png'
 import Footer from './Footer'
 import DashboardHeader from './DashboardHeader'
@@ -13,6 +13,7 @@ const Dashboard = () => {
   const [showVentasDropdown, setShowVentasDropdown] = useState(false)
   const [showActivacionDropdown, setShowActivacionDropdown] = useState(false)
   const [showFinanzasDropdown, setShowFinanzasDropdown] = useState(false)
+  const [showCobranzaDropdown, setShowCobranzaDropdown] = useState(false)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -34,13 +35,16 @@ const Dashboard = () => {
       if (showFinanzasDropdown && !event.target.closest('.finanzas-dropdown-container')) {
         setShowFinanzasDropdown(false)
       }
+      if (showCobranzaDropdown && !event.target.closest('.cobranza-dropdown-container')) {
+        setShowCobranzaDropdown(false)
+      }
     }
 
     document.addEventListener('mousedown', handleClickOutside)
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
     }
-  }, [showVentasDropdown, showActivacionDropdown, showFinanzasDropdown])
+  }, [showVentasDropdown, showActivacionDropdown, showFinanzasDropdown, showCobranzaDropdown])
 
   if (loading) {
     return (
@@ -62,7 +66,7 @@ const Dashboard = () => {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col items-center py-8 md:py-16 px-4 md:px-8">
-        <div className="flex flex-col md:flex-row space-y-6 md:space-y-0 md:space-x-8 w-full max-w-6xl">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-5xl">
           {/* Dashboard de Ventas */}
           <div className="flex-1 relative ventas-dropdown-container">
             <div 
@@ -192,6 +196,52 @@ const Dashboard = () => {
                     <div>
                       <div className="font-medium text-gray-900">Rentabilidad</div>
                       <div className="text-sm text-gray-500">Tabla de rentabilidad con filtros</div>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Dashboard de Cobranza */}
+          <div className="flex-1 relative cobranza-dropdown-container">
+            <div 
+              onClick={() => setShowCobranzaDropdown(!showCobranzaDropdown)}
+              className="relative bg-orange-600 hover:bg-orange-700 transition-colors rounded-2xl p-6 md:p-8 h-32 md:h-40 flex items-center cursor-pointer shadow-xl"
+            >
+              <div className="flex-1">
+                <h2 className="text-white font-bold leading-tight mb-2 text-xl md:text-2xl lg:text-3xl" style={{ fontFamily: 'Open Sans' }}>
+                  DASHBOARD DE<br />COBRANZA
+                </h2>
+                <p className="text-white font-medium text-sm md:text-base lg:text-xl" style={{ fontFamily: 'Open Sans' }}>COBRANZA</p>
+              </div>
+              <div className="absolute right-4 md:right-6 top-1/2 transform -translate-y-1/2">
+                <div className="rounded-full p-2 md:p-4 w-12 h-12 md:w-20 md:h-20 flex items-center justify-center bg-orange-800">
+                  <HiOutlineClipboardList className="w-6 h-6 md:w-10 md:h-10 text-white" />
+                </div>
+              </div>
+              <div className="absolute bottom-2 right-2">
+                <ChevronDown className={`w-4 h-4 md:w-5 md:h-5 text-white transition-transform ${showCobranzaDropdown ? 'rotate-180' : ''}`} />
+              </div>
+            </div>
+            
+            {/* Dropdown de Cobranza */}
+            {showCobranzaDropdown && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-xl border border-gray-200 z-10">
+                <div className="py-2">
+                  <button
+                    onClick={() => {
+                      navigate('/dashboard/finanzas/cobranza')
+                      setShowCobranzaDropdown(false)
+                    }}
+                    className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors flex items-center space-x-3"
+                  >
+                    <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                      <HiOutlineClipboardList className="w-4 h-4 text-orange-600" />
+                    </div>
+                    <div>
+                      <div className="font-medium text-gray-900">Cuentas por Cobrar</div>
+                      <div className="text-sm text-gray-500">Gestión de cobranza y cartera</div>
                     </div>
                   </button>
                 </div>

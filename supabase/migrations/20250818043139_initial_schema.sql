@@ -28,7 +28,7 @@ CREATE OR REPLACE FUNCTION "public"."execute_mysql_migration"() RETURNS "void"
 DECLARE
     response_status int;
     response_content text;
-    project_url text := 'https://vgszusyipzoptbyvcjfo.supabase.co';
+    project_url text := 'https://efmdfbokgrgwmxzvqvio.supabase.co';
     service_role_key text;
     request_id bigint;
 BEGIN
