@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { getCurrentUser } from '../lib/supabase'
 import { useNavigate } from 'react-router-dom'
 import { ChevronDown } from 'lucide-react'
-import { HiOutlineChartBar, HiOutlineUserAdd } from 'react-icons/hi'
+import { HiOutlineChartBar, HiOutlineUserAdd, HiOutlineCurrencyDollar } from 'react-icons/hi'
 import fondoImg from '../assets/fondo.png'
 import Footer from './Footer'
 import DashboardHeader from './DashboardHeader'
@@ -12,6 +12,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true)
   const [showVentasDropdown, setShowVentasDropdown] = useState(false)
   const [showActivacionDropdown, setShowActivacionDropdown] = useState(false)
+  const [showFinanzasDropdown, setShowFinanzasDropdown] = useState(false)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -30,13 +31,16 @@ const Dashboard = () => {
       if (showActivacionDropdown && !event.target.closest('.activacion-dropdown-container')) {
         setShowActivacionDropdown(false)
       }
+      if (showFinanzasDropdown && !event.target.closest('.finanzas-dropdown-container')) {
+        setShowFinanzasDropdown(false)
+      }
     }
 
     document.addEventListener('mousedown', handleClickOutside)
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
     }
-  }, [showVentasDropdown, showActivacionDropdown])
+  }, [showVentasDropdown, showActivacionDropdown, showFinanzasDropdown])
 
   if (loading) {
     return (
@@ -143,6 +147,51 @@ const Dashboard = () => {
                     <div>
                       <div className="font-medium text-gray-900">Ventas Región Aliado SKU</div>
                       <div className="text-sm text-gray-500">Análisis por región, aliado y SKU</div>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Dashboard de Finanzas */}
+          <div className="flex-1 relative finanzas-dropdown-container">
+            <div 
+              onClick={() => setShowFinanzasDropdown(!showFinanzasDropdown)}
+              className="relative bg-slate-700 hover:bg-slate-800 transition-colors rounded-2xl p-6 md:p-8 h-32 md:h-40 flex items-center cursor-pointer shadow-xl"
+            >
+              <div className="flex-1">
+                <h2 className="text-white font-bold leading-tight mb-2 text-xl md:text-2xl lg:text-3xl" style={{ fontFamily: 'Open Sans' }}>
+                  DASHBOARD DE<br />FINANZAS
+                </h2>
+                <p className="text-white font-medium text-sm md:text-base lg:text-xl" style={{ fontFamily: 'Open Sans' }}>FINANZAS</p>
+              </div>
+              <div className="absolute right-4 md:right-6 top-1/2 transform -translate-y-1/2">
+                <div className="rounded-full p-2 md:p-4 w-12 h-12 md:w-20 md:h-20 flex items-center justify-center bg-slate-900">
+                  <HiOutlineCurrencyDollar className="w-6 h-6 md:w-10 md:h-10 text-white" />
+                </div>
+              </div>
+              <div className="absolute bottom-2 right-2">
+                <ChevronDown className={`w-4 h-4 md:w-5 md:h-5 text-white transition-transform ${showFinanzasDropdown ? 'rotate-180' : ''}`} />
+              </div>
+            </div>
+            {/* Dropdown de Finanzas */}
+            {showFinanzasDropdown && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-xl border border-gray-200 z-10">
+                <div className="py-2">
+                  <button
+                    onClick={() => {
+                      navigate('/dashboard/finanzas/rentabilidad')
+                      setShowFinanzasDropdown(false)
+                    }}
+                    className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors flex items-center space-x-3"
+                  >
+                    <div className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center">
+                      <HiOutlineCurrencyDollar className="w-4 h-4 text-slate-700" />
+                    </div>
+                    <div>
+                      <div className="font-medium text-gray-900">Rentabilidad</div>
+                      <div className="text-sm text-gray-500">Tabla de rentabilidad con filtros</div>
                     </div>
                   </button>
                 </div>

@@ -10,6 +10,7 @@ import ActivacionAliadosDepartamentos from './components/ActivacionAliadosDepart
 import ActivacionAliadosGrupos from './components/ActivacionAliadosGrupos'
 import ActivacionAliadosMarcas from './components/ActivacionAliadosMarcas'
 import ActivacionAliadosSku from './components/ActivacionAliadosSku'
+import FinanzasRentabilidad from './components/FinanzasRentabilidad'
 
 // Componente para rutas protegidas
 const ProtectedRoute = ({ children }) => {
@@ -130,6 +131,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <ActivacionAliadosSku />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/dashboard/finanzas/rentabilidad" 
+            element={
+              <ProtectedRoute>
+                <FinanzasRentabilidad />
               </ProtectedRoute>
             } 
           />
