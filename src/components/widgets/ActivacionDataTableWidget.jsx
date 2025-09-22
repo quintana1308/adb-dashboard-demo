@@ -238,11 +238,10 @@ const ActivacionDataTableWidget = forwardRef(({
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col h-[calc(100vh-200px)]">
-      {/* Tabla con altura fija y scroll */}
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col h-[calc(100vh-160px)]">
       <div className="flex-1 overflow-hidden">
         <div className="h-full overflow-auto">
-          <table className="w-full min-w-[800px] table-auto md:table-fixed">
+          <table className="w-full min-w-[1800px] table-auto">
             <thead className="bg-gradient-to-r from-slate-200 to-slate-300 border-b-2 border-slate-400 sticky top-0 z-10">
               <tr>
                 {columns.map((column, index) => (
@@ -254,11 +253,7 @@ const ActivacionDataTableWidget = forwardRef(({
                       index < columns.length - 1 ? 'border-r border-gray-300' : ''
                     } whitespace-nowrap`}
                     onClick={() => column.sortable && handleSort(column.key)}
-                    style={{ 
-                      width: column.width || 'auto',
-                      minWidth: column.width ? '0' : 'auto',
-                      maxWidth: column.width || 'none'
-                    }}
+                    style={{ width: column.width || 'auto' }}
                   >
                     <div className={`flex items-center ${column.align === 'right' ? 'justify-end' : 'justify-start'} space-x-1`}>
                       <span className="truncate">{column.label}</span>
@@ -301,12 +296,9 @@ const ActivacionDataTableWidget = forwardRef(({
                             key={column.key}
                             className={`px-2 md:px-6 py-2 text-xs md:text-sm text-gray-900 ${
                               column.align === 'right' ? 'text-right' : 'text-left'
-                            } ${colIndex < columns.length - 1 ? 'border-r border-gray-200' : ''} ${column.key === 'sucursal' ? 'w-[250px]' : ''}`}
+                            } ${colIndex < columns.length - 1 ? 'border-r border-gray-200' : ''}`}
                           >
-                            <div 
-                              className={`${column.key === 'sucursal' ? 'truncate' : ''}`}
-                              title={column.key === 'sucursal' ? formatValue(row[column.key], column) : undefined}
-                            >
+                            <div>
                               {formatValue(row[column.key], column)}
                             </div>
                           </td>
@@ -333,38 +325,10 @@ const ActivacionDataTableWidget = forwardRef(({
         </div>
       </div>
 
-      {/* Fila de totales fija - siempre visible */}
-      {!loading && data.length > 0 && (
+      {!loading && (
         <div className="border-t-2 border-blue-300 bg-gradient-to-r from-blue-50 to-blue-100">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[800px] table-auto">
-              <tbody>
-                <tr className="font-semibold">
-                  {columns.map((column, colIndex) => {
-                    const totals = calculateTotals()
-                    return (
-                      <td
-                        key={column.key}
-                        className={`px-2 md:px-6 py-2 whitespace-nowrap text-xs md:text-sm text-blue-900 ${
-                          column.align === 'right' ? 'text-right' : 'text-left'
-                        } ${colIndex < columns.length - 1 ? 'border-r border-blue-200' : ''} ${
-                          column.key === 'sucursal' ? 'w-[250px]' : ''
-                        }`}
-                      >
-                        {colIndex === 0 
-                          ? `TOTAL: ${totalRecords.toLocaleString()}`
-                          : column.key === 'mes' || column.key.includes('porcentaje')
-                            ? ''
-                            : totals[column.key] 
-                              ? formatValue(totals[column.key], column)
-                              : ''
-                        }
-                      </td>
-                    )
-                  })}
-                </tr>
-              </tbody>
-            </table>
+          <div className="px-4 py-2 text-xs md:text-sm text-blue-900">
+            Total registros: {totalRecords.toLocaleString()}
           </div>
         </div>
       )}
