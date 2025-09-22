@@ -13,7 +13,7 @@ NC='\033[0m' # No Color
 DUMP_DIR="$(pwd)/temp_dumps"
 
 # ID del proyecto Supabase
-PROJECT_ID="vgszusyipzoptbyvcjfo"
+PROJECT_ID="efmdfbokgrgwmxzvqvio"
 
 echo -e "${YELLOW}Iniciando sincronización de datos desde Supabase remoto...${NC}"
 

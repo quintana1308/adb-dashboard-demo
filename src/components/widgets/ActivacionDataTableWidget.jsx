@@ -78,11 +78,7 @@ const ActivacionDataTableWidget = forwardRef(({
         params = {
           p_anio: filtros.anio === 'All' ? null : (filtros.anio ? parseInt(filtros.anio) : null),
           p_mes: filtros.mes === 'All' ? null : filtros.mes,
-          p_codigoruta: filtros.codigoruta === 'All' ? null : filtros.codigoruta,
-          p_page: pageToFetch,
-          p_page_size: pageSize,
-          p_sort_column: sorting.column,
-          p_sort_direction: sorting.direction
+          p_codigoruta: filtros.codigoruta === 'All' ? null : filtros.codigoruta
         }
       } else {
         // Para otros tipos de activación (departamentos, grupos, etc.)
@@ -121,19 +117,25 @@ const ActivacionDataTableWidget = forwardRef(({
         return
       }
 
-
-      const newTotalRecords = result[0]?.total_count || 0
-      setTotalRecords(newTotalRecords)
-
-      if (isInitial) {
+      // Para get_activacion_vendedor no hay paginación, se obtienen todos los datos
+      if (rpcFunction === 'get_activacion_vendedor') {
         setData(result)
+        setTotalRecords(result.length)
+        setHasMore(false)
       } else {
-        setData(prevData => [...prevData, ...result])
-      }
+        const newTotalRecords = result[0]?.total_count || 0
+        setTotalRecords(newTotalRecords)
 
-      // Check if there are more pages
-      const totalPages = Math.ceil(newTotalRecords / pageSize)
-      setHasMore(pageToFetch < totalPages)
+        if (isInitial) {
+          setData(result)
+        } else {
+          setData(prevData => [...prevData, ...result])
+        }
+
+        // Check if there are more pages
+        const totalPages = Math.ceil(newTotalRecords / pageSize)
+        setHasMore(pageToFetch < totalPages)
+      }
 
     } catch (error) {
       console.error(`Error cargando datos de ${tipo}:`, error)
@@ -173,20 +175,26 @@ const ActivacionDataTableWidget = forwardRef(({
   }
 
   const formatValue = (value, column) => {
-    if (value === null || value === undefined) return '-'
+    if (value === null || value === undefined || value === '') return '-'
     
     // Formatear porcentajes
     if (column.key.includes('porcentaje')) {
-      return `${parseFloat(value).toFixed(2)}%`
+      const numValue = parseFloat(value)
+      return isNaN(numValue) ? '-' : `${numValue.toFixed(2)}%`
     }
     
     // Formatear números grandes con separadores de miles
     const numericColumns = ['a2024', 'a2025', 'c2024', 'c2025', 'activacion_acumulada_mes', 'cartera_general', 
-                           'cartera_semana2', 'cartera_semana3', 'cartera_semana4', 'cartera_semana5',
-                           'activacion_semana2', 'activacion_semana3', 'activacion_semana4', 'activacion_semana5']
+                           'cartera_semana1', 'cartera_semana2', 'cartera_semana3', 'cartera_semana4', 'cartera_semana5', 'cartera_semana6',
+                           'activacion_semana1', 'activacion_semana2', 'activacion_semana3', 'activacion_semana4', 'activacion_semana5', 'activacion_semana6']
     
-    if (typeof value === 'number' && numericColumns.includes(column.key)) {
-      return value.toLocaleString()
+    if (numericColumns.includes(column.key)) {
+      // Intentar convertir a número si es string
+      const numValue = typeof value === 'string' ? parseFloat(value) : value
+      if (typeof numValue === 'number' && !isNaN(numValue)) {
+        return numValue.toLocaleString()
+      }
+      return value === '' ? '-' : value
     }
     
     return value
@@ -200,11 +208,11 @@ const ActivacionDataTableWidget = forwardRef(({
     let numericColumns = ['a2024', 'c2024', 'a2025', 'c2025']
     
     // Para Activación por Vendedor, usar diferentes columnas
-    if (rpcFunction === 'get_activacion_vendedor' || rpcFunction === 'get_activacion_vendedor_v2') {
+    if (rpcFunction === 'get_activacion_vendedor' || rpcFunction === 'get_activacion_vendedor_v2' || rpcFunction === 'get_act_vendedor_v2') {
       numericColumns = [
         'activacion_acumulada_mes', 'cartera_general',
-        'cartera_semana2', 'cartera_semana3', 'cartera_semana4', 'cartera_semana5',
-        'activacion_semana2', 'activacion_semana3', 'activacion_semana4', 'activacion_semana5'
+        'cartera_semana1', 'cartera_semana2', 'cartera_semana3', 'cartera_semana4', 'cartera_semana5', 'cartera_semana6',
+        'activacion_semana1', 'activacion_semana2', 'activacion_semana3', 'activacion_semana4', 'activacion_semana5', 'activacion_semana6'
       ]
     }
     

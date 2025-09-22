@@ -266,7 +266,7 @@ const ActivacionVendedor = () => {
             ref={widgetRef}
             filtros={filtrosSeleccionados}
             tipo="vendedor"
-            rpcFunction="get_act_vendedor_v2"
+            rpcFunction="get_activacion_vendedor"
             columns={[
               { key: 'anio', label: 'AÑO', sortable: true },
               { key: 'mes', label: 'MES', sortable: true },
@@ -275,18 +275,24 @@ const ActivacionVendedor = () => {
               { key: 'porcentaje_acumulado_mes', label: '% ACUMULADO MES', sortable: true, align: 'right' },
               { key: 'activacion_acumulada_mes', label: 'ACTIVACIÓN ACUMULADA', sortable: true, align: 'right' },
               { key: 'cartera_general', label: 'CARTERA GENERAL', sortable: true, align: 'right' },
+              { key: 'cartera_semana1', label: 'CARTERA S1', sortable: true, align: 'right' },
               { key: 'cartera_semana2', label: 'CARTERA S2', sortable: true, align: 'right' },
               { key: 'cartera_semana3', label: 'CARTERA S3', sortable: true, align: 'right' },
               { key: 'cartera_semana4', label: 'CARTERA S4', sortable: true, align: 'right' },
               { key: 'cartera_semana5', label: 'CARTERA S5', sortable: true, align: 'right' },
+              { key: 'cartera_semana6', label: 'CARTERA S6', sortable: true, align: 'right' },
+              { key: 'activacion_semana1', label: 'ACTIVACIÓN S1', sortable: true, align: 'right' },
               { key: 'activacion_semana2', label: 'ACTIVACIÓN S2', sortable: true, align: 'right' },
               { key: 'activacion_semana3', label: 'ACTIVACIÓN S3', sortable: true, align: 'right' },
               { key: 'activacion_semana4', label: 'ACTIVACIÓN S4', sortable: true, align: 'right' },
               { key: 'activacion_semana5', label: 'ACTIVACIÓN S5', sortable: true, align: 'right' },
+              { key: 'activacion_semana6', label: 'ACTIVACIÓN S6', sortable: true, align: 'right' },
+              { key: 'porcentaje_semana1', label: '% S1', sortable: true, align: 'right' },
               { key: 'porcentaje_semana2', label: '% S2', sortable: true, align: 'right' },
               { key: 'porcentaje_semana3', label: '% S3', sortable: true, align: 'right' },
               { key: 'porcentaje_semana4', label: '% S4', sortable: true, align: 'right' },
-              { key: 'porcentaje_semana5', label: '% S5', sortable: true, align: 'right' }
+              { key: 'porcentaje_semana5', label: '% S5', sortable: true, align: 'right' },
+              { key: 'porcentaje_semana6', label: '% S6', sortable: true, align: 'right' }
             ]}
           />
         </div>
