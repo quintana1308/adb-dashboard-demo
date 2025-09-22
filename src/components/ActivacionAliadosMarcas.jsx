@@ -157,6 +157,12 @@ const ActivacionAliadosMarcas = () => {
           >
             Aliados - SKU
           </button>
+          <button 
+            className="text-white/80 hover:text-white transition-colors"
+            onClick={() => navigate('/dashboard/activacion/vendedor')}
+          >
+            Activacion - Vendedor
+          </button>
         </nav>
         {/* Menú móvil */}
         <div className="md:hidden">
@@ -167,6 +173,7 @@ const ActivacionAliadosMarcas = () => {
               if (value === 'departamentos') navigate('/dashboard/activacion/departamentos')
               else if (value === 'grupos') navigate('/dashboard/activacion/grupos')
               else if (value === 'sku') navigate('/dashboard/activacion/sku')
+              else if (value === 'vendedor') navigate('/dashboard/activacion/vendedor')
             }}
             defaultValue="marcas"
           >
@@ -174,6 +181,7 @@ const ActivacionAliadosMarcas = () => {
             <option value="grupos" className="text-black">Aliados - Grupos</option>
             <option value="marcas" className="text-black">Aliados - Marcas</option>
             <option value="sku" className="text-black">Aliados - SKU</option>
+            <option value="vendedor" className="text-black">Activacion - Vendedor</option>
           </select>
         </div>
       </DashboardHeader>

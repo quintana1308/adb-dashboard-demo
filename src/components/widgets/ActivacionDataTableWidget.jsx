@@ -71,21 +71,37 @@ const ActivacionDataTableWidget = forwardRef(({
       
 
       // Preparar parámetros para la función RPC
-      const params = {
-        p_mes: filtros.mes === 'All' ? null : filtros.mes,
-        p_region: filtros.region === 'All' ? null : filtros.region,
-        p_estado: filtros.estado === 'All' ? null : filtros.estado,
-        p_aliado: filtros.aliado === 'All' ? null : filtros.aliado,
-        p_sucursal: filtros.sucursal === 'All' ? null : filtros.sucursal,
-        p_page: pageToFetch,
-        p_page_size: pageSize,
-        p_sort_column: sorting.column,
-        p_sort_direction: sorting.direction
-      }
+      let params = {}
 
-      // Para SKU, agregar parámetro adicional si existe
-      if (rpcFunction === 'get_act_aliados_sku' || rpcFunction === 'get_act_aliados_sku_v2') {
-        params.p_sku = filtros.sku === 'All' ? null : filtros.sku
+      // Para Activación por Vendedor
+      if (rpcFunction === 'get_activacion_vendedor' || rpcFunction === 'get_activacion_vendedor_v2' || rpcFunction === 'get_act_vendedor_v2') {
+        params = {
+          p_anio: filtros.anio === 'All' ? null : (filtros.anio ? parseInt(filtros.anio) : null),
+          p_mes: filtros.mes === 'All' ? null : filtros.mes,
+          p_codigoruta: filtros.codigoruta === 'All' ? null : filtros.codigoruta,
+          p_page: pageToFetch,
+          p_page_size: pageSize,
+          p_sort_column: sorting.column,
+          p_sort_direction: sorting.direction
+        }
+      } else {
+        // Para otros tipos de activación (departamentos, grupos, etc.)
+        params = {
+          p_mes: filtros.mes === 'All' ? null : filtros.mes,
+          p_region: filtros.region === 'All' ? null : filtros.region,
+          p_estado: filtros.estado === 'All' ? null : filtros.estado,
+          p_aliado: filtros.aliado === 'All' ? null : filtros.aliado,
+          p_sucursal: filtros.sucursal === 'All' ? null : filtros.sucursal,
+          p_page: pageToFetch,
+          p_page_size: pageSize,
+          p_sort_column: sorting.column,
+          p_sort_direction: sorting.direction
+        }
+
+        // Para SKU, agregar parámetro adicional si existe
+        if (rpcFunction === 'get_act_aliados_sku' || rpcFunction === 'get_act_aliados_sku_v2') {
+          params.p_sku = filtros.sku === 'All' ? null : filtros.sku
+        }
       }
 
 
@@ -161,11 +177,15 @@ const ActivacionDataTableWidget = forwardRef(({
     
     // Formatear porcentajes
     if (column.key.includes('porcentaje')) {
-      return `${value}%`
+      return `${parseFloat(value).toFixed(2)}%`
     }
     
     // Formatear números grandes con separadores de miles
-    if (typeof value === 'number' && (column.key === 'a2024' || column.key === 'a2025' || column.key === 'c2024' || column.key === 'c2025')) {
+    const numericColumns = ['a2024', 'a2025', 'c2024', 'c2025', 'activacion_acumulada_mes', 'cartera_general', 
+                           'cartera_semana2', 'cartera_semana3', 'cartera_semana4', 'cartera_semana5',
+                           'activacion_semana2', 'activacion_semana3', 'activacion_semana4', 'activacion_semana5']
+    
+    if (typeof value === 'number' && numericColumns.includes(column.key)) {
       return value.toLocaleString()
     }
     
@@ -177,7 +197,16 @@ const ActivacionDataTableWidget = forwardRef(({
     if (!data || data.length === 0) return {}
     
     const totals = {}
-    const numericColumns = ['a2024', 'c2024', 'a2025', 'c2025']
+    let numericColumns = ['a2024', 'c2024', 'a2025', 'c2025']
+    
+    // Para Activación por Vendedor, usar diferentes columnas
+    if (rpcFunction === 'get_activacion_vendedor' || rpcFunction === 'get_activacion_vendedor_v2') {
+      numericColumns = [
+        'activacion_acumulada_mes', 'cartera_general',
+        'cartera_semana2', 'cartera_semana3', 'cartera_semana4', 'cartera_semana5',
+        'activacion_semana2', 'activacion_semana3', 'activacion_semana4', 'activacion_semana5'
+      ]
+    }
     
     numericColumns.forEach(col => {
       totals[col] = data.reduce((sum, row) => {

@@ -7,7 +7,9 @@ const FinanzasDataTableWidget = forwardRef(({
   rpcFunction,
   totalsRpcFunction,
   columns,
-  onTotalsChange
+  onTotalsChange,
+  edgeFunctionName,
+  totalsEdgeFunctionName
 }, ref) => {
   const [data, setData] = useState([])
   const [loading, setLoading] = useState(true)
@@ -59,7 +61,60 @@ const FinanzasDataTableWidget = forwardRef(({
     try {
       const pageToFetch = isInitial ? 1 : page
 
-      // Preparar parámetros usando los filtros reales
+      // Si hay Edge Function, usarla en lugar de RPC
+      if (edgeFunctionName) {
+        const { data: { session } } = await supabase.auth.getSession()
+        const token = session?.access_token
+
+        const response = await fetch(`${supabase.supabaseUrl}/functions/v1/${edgeFunctionName}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+            'apikey': supabase.supabaseKey
+          },
+          body: JSON.stringify(filtros)
+        })
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+
+        const { data: result, totalCount, error: edgeError } = await response.json()
+        
+        if (edgeError) {
+          throw new Error(edgeError)
+        }
+
+        if (!result || result.length === 0) {
+          if (isInitial) {
+            setData([])
+            setTotalRecords(totalCount || 0)
+          }
+          setHasMore(false)
+          return
+        }
+
+        // Para Edge Functions, manejamos la paginación en el cliente
+        const startIndex = (pageToFetch - 1) * pageSize
+        const endIndex = startIndex + pageSize
+        const paginatedResult = result.slice(startIndex, endIndex)
+
+        setTotalRecords(totalCount || result.length)
+
+        if (isInitial) {
+          setData(paginatedResult)
+          setPage(1)
+        } else {
+          setData(prev => [...prev, ...paginatedResult])
+          setPage(prev => prev + 1)
+        }
+
+        setHasMore(endIndex < result.length)
+        return
+      }
+
+      // Lógica RPC original
       const params = {
         p_page: pageToFetch,
         p_page_size: pageSize,
@@ -132,7 +187,7 @@ const FinanzasDataTableWidget = forwardRef(({
       console.log('Has more pages:', result.length === pageSize)
       setHasMore(pageToFetch < totalPages)
     } catch (err) {
-      console.error('Error cargando datos de rentabilidad:', err)
+      console.error('Error cargando datos:', err)
       setError(err.message)
       if (isInitial) setData([])
     } finally {
@@ -142,9 +197,50 @@ const FinanzasDataTableWidget = forwardRef(({
   }
 
   const fetchTotals = async () => {
-    if (!totalsRpcFunction || !onTotalsChange) return
+    if ((!totalsRpcFunction && !totalsEdgeFunctionName) || !onTotalsChange) return
     try {
-      // Construir parámetros dinámicamente basándose en los filtros disponibles
+      // Si hay Edge Function para totales, usarla
+      if (totalsEdgeFunctionName) {
+        const { data: { session } } = await supabase.auth.getSession()
+        const token = session?.access_token
+
+        const response = await fetch(`${supabase.supabaseUrl}/functions/v1/${totalsEdgeFunctionName}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+            'apikey': supabase.supabaseKey
+          },
+          body: JSON.stringify(filtros)
+        })
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+
+        const { data: result, error: edgeError } = await response.json()
+        
+        if (edgeError) {
+          throw new Error(edgeError)
+        }
+
+        const totals = result || {}
+        console.log('Edge Function totals:', totals)
+        
+        // Manejar totales de ventas generales
+        if (totals.ventasunidadestotal !== undefined || totals.ventaskilostotal !== undefined) {
+          onTotalsChange({
+            ventasUnidadesTotal: totals.ventasunidadestotal ?? 0,
+            ventasKilosTotal: totals.ventaskilostotal ?? 0,
+            ventasCajasTotal: totals.ventascajastotal ?? 0,
+            ventasUsdTotal: totals.ventasusdtotal ?? 0,
+            tonelajeTotal: totals.tonelajetotal ?? 0
+          })
+        }
+        return
+      }
+
+      // Lógica RPC original
       const params = {}
       
       // Filtros de rentabilidad
@@ -189,10 +285,18 @@ const FinanzasDataTableWidget = forwardRef(({
     } catch (err) {
       console.error('Error cargando totales:', err)
       // Proporcionar valores por defecto según el tipo de función
-      if (totalsRpcFunction.includes('rentabilidad')) {
+      if (totalsRpcFunction?.includes('rentabilidad')) {
         onTotalsChange?.({ ventaBrutaTotal: 0, costoBrutoTotal: 0, utilidadPct: 0 })
-      } else if (totalsRpcFunction.includes('cobranza')) {
+      } else if (totalsRpcFunction?.includes('cobranza')) {
         onTotalsChange?.({ saldoTotal: 0, valorVencidoTotal: 0, porcentajeVencimiento: 0 })
+      } else if (totalsEdgeFunctionName?.includes('ventas-generales')) {
+        onTotalsChange?.({ 
+          ventasUnidadesTotal: 0, 
+          ventasKilosTotal: 0, 
+          ventasCajasTotal: 0, 
+          ventasUsdTotal: 0, 
+          tonelajeTotal: 0 
+        })
       }
     }
   }
@@ -221,10 +325,22 @@ const FinanzasDataTableWidget = forwardRef(({
     if (value === null || value === undefined) return '-'
     
     // Campos monetarios que necesitan formato de número
-    const monetaryFields = ['venta_bruta', 'costo_bruto', 'saldo', 'valorvencido', 'gastosgenerales']
+    const monetaryFields = ['venta_bruta', 'costo_bruto', 'saldo', 'valorvencido', 'gastosgenerales', 'ventas_usd']
     
-    if (typeof value === 'number' && monetaryFields.includes(column.key)) {
-      return value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    // Campos numéricos que necesitan formato con decimales
+    const numericFields = ['ventas_kilos', 'ventas_cajas', 'tonelaje']
+    
+    // Campos de unidades (sin decimales)
+    const unitFields = ['ventas_unidades']
+    
+    if (typeof value === 'number') {
+      if (monetaryFields.includes(column.key)) {
+        return value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      } else if (numericFields.includes(column.key)) {
+        return value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      } else if (unitFields.includes(column.key)) {
+        return value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+      }
     }
     
     // Formatear fechas

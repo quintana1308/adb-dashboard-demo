@@ -110,6 +110,21 @@ const Dashboard = () => {
                   </button>
                   <button
                     onClick={() => {
+                      navigate('/dashboard/ventas/ventas-generales')
+                      setShowVentasDropdown(false)
+                    }}
+                    className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors flex items-center space-x-3"
+                  >
+                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                      <HiOutlineChartBar className="w-4 h-4 text-blue-600" />
+                    </div>
+                    <div>
+                      <div className="font-medium text-gray-900">Ventas Generales</div>
+                      <div className="text-sm text-gray-500">Tabla completa con filtros y métricas</div>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => {
                       navigate('/dashboard/ventas/ventas')
                       setShowVentasDropdown(false)
                     }}
@@ -348,6 +363,21 @@ const Dashboard = () => {
                     <div>
                       <div className="font-medium text-gray-900">Activación por SKU</div>
                       <div className="text-sm text-gray-500">Análisis por SKU</div>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => {
+                      navigate('/dashboard/activacion/activacion-vendedor')
+                      setShowActivacionDropdown(false)
+                    }}
+                    className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors flex items-center space-x-3"
+                  >
+                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                      <HiOutlineUserAdd className="w-4 h-4 text-purolomo-green" />
+                    </div>
+                    <div>
+                      <div className="font-medium text-gray-900">Activación por Vendedor</div>
+                      <div className="text-sm text-gray-500">Análisis por vendedor y rutas</div>
                     </div>
                   </button>
                 </div>

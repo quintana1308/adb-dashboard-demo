@@ -1,29 +1,24 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Calendar, MapPin, Building, Users, Filter, RefreshCw, FilterX, Maximize, ChevronDown, ChevronUp } from 'lucide-react'
+import { Calendar, MapPin, Filter, RefreshCw, FilterX, Maximize, ChevronDown, ChevronUp, TrendingUp, Users, Percent, FileText } from 'lucide-react'
 import ActivacionDataTableWidget from './widgets/ActivacionDataTableWidget'
-import ActivacionExcelExportButton from './ActivacionExcelExportButton'
 import { supabase } from '../lib/supabase'
 import Footer from './Footer'
 import DashboardHeader from './DashboardHeader'
 
-const ActivacionAliadosGrupos = () => {
+const ActivacionVendedor = () => {
   const navigate = useNavigate()
   const widgetRef = useRef(null)
   const [loading, setLoading] = useState(false)
   const [filtrosData, setFiltrosData] = useState({
+    anios: [],
     meses: [],
-    regiones: [],
-    estados: [],
-    aliados: [],
-    sucursales: []
+    codigorutas: []
   })
   const [filtrosSeleccionados, setFiltrosSeleccionados] = useState({
+    anio: 'All',
     mes: 'All',
-    region: 'All', 
-    estado: 'All',
-    aliado: 'All',
-    sucursal: 'All'
+    codigoruta: 'All'
   })
   const [filtrosColapsados, setFiltrosColapsados] = useState(true)
 
@@ -32,34 +27,25 @@ const ActivacionAliadosGrupos = () => {
     fetchFiltros()
   }, [])
 
-  const fetchFiltros = async (aliadoSeleccionado = null) => {
+  const fetchFiltros = async () => {
     if (loading) return // Prevenir llamados dobles
     setLoading(true)
     try {
-      // Usar función RPC optimizada para obtener valores únicos directamente
-      // La función RPC v2 permite filtrar sucursales por aliado
-      const { data: filtrosResult, error } = await supabase.rpc('get_filtros_activacion_v2', { 
-        p_tipo: 'GPO',
-        p_aliado: aliadoSeleccionado
-      })
-
+      const { data: filtrosResult, error } = await supabase.rpc('get_filtros_activacion_vendedor')
+      
       if (error) {
         console.error('Error al cargar filtros:', error)
         throw error
       }
 
-      // Procesar los resultados de la función RPC
-      const filtrosMap = {}
-      filtrosResult?.forEach(row => {
-        filtrosMap[row.campo] = row.valores || []
-      })
+      const aniosUnicos = [...new Set(filtrosResult.map(item => item.anios))].sort((a, b) => b - a)
+      const mesesUnicos = [...new Set(filtrosResult.map(item => item.meses))].sort()
+      const codigorutasUnicos = [...new Set(filtrosResult.map(item => item.codigorutas))].sort()
 
       setFiltrosData({
-        meses: filtrosMap.mes || [],
-        regiones: filtrosMap.region || [],
-        estados: filtrosMap.estado || [],
-        aliados: filtrosMap.aliado || [],
-        sucursales: filtrosMap.sucursal || []
+        anios: aniosUnicos,
+        meses: mesesUnicos,
+        codigorutas: codigorutasUnicos
       })
 
     } catch (error) {
@@ -77,51 +63,26 @@ const ActivacionAliadosGrupos = () => {
     }
   }
 
-  const handleFiltroChange = async (tipo, valor) => {
+  const handleFiltroChange = (tipo, valor) => {
     setFiltrosSeleccionados(prev => ({
       ...prev,
       [tipo]: valor
     }))
-
-    // Si se cambió el aliado, actualizar las sucursales disponibles
-    if (tipo === 'aliado') {
-      // Resetear sucursal cuando cambie el aliado
-      setFiltrosSeleccionados(prev => ({
-        ...prev,
-        aliado: valor,
-        sucursal: 'All'
-      }))
-      
-      // Recargar filtros con el nuevo aliado seleccionado
-      const aliadoParaFiltro = valor === 'All' ? null : valor
-      await fetchFiltros(aliadoParaFiltro)
-    }
   }
 
   const limpiarFiltros = async () => {
     setFiltrosSeleccionados({
+      anio: 'All',
       mes: 'All',
-      region: 'All',
-      estado: 'All',
-      aliado: 'All',
-      sucursal: 'All'
+      codigoruta: 'All'
     })
-    // Recargar filtros sin aliado específico para mostrar todas las sucursales
-    await fetchFiltros(null)
-  }
-
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen()
-    } else {
-      document.exitFullscreen()
-    }
+    await fetchFiltros()
   }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
-      <DashboardHeader title="Activación - Aliados Grupos">
+      <DashboardHeader title="Activación - Vendedor">
         <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
           <button 
             className="text-white/80 hover:text-white transition-colors"
@@ -130,7 +91,8 @@ const ActivacionAliadosGrupos = () => {
             Aliados - Departamentos
           </button>
           <button 
-            className="text-white border-b-2 border-white pb-1 font-semibold"
+            className="text-white/80 hover:text-white transition-colors"
+            onClick={() => navigate('/dashboard/activacion/grupos')}
           >
             Aliados - Grupos
           </button>
@@ -147,8 +109,7 @@ const ActivacionAliadosGrupos = () => {
             Aliados - SKU
           </button>
           <button 
-            className="text-white/80 hover:text-white transition-colors"
-            onClick={() => navigate('/dashboard/activacion/vendedor')}
+            className="text-white border-b-2 border-white pb-1 font-semibold"
           >
             Activacion - Vendedor
           </button>
@@ -160,11 +121,11 @@ const ActivacionAliadosGrupos = () => {
             onChange={(e) => {
               const value = e.target.value
               if (value === 'departamentos') navigate('/dashboard/activacion/departamentos')
+              else if (value === 'grupos') navigate('/dashboard/activacion/grupos')
               else if (value === 'marcas') navigate('/dashboard/activacion/marcas')
               else if (value === 'sku') navigate('/dashboard/activacion/sku')
-              else if (value === 'vendedor') navigate('/dashboard/activacion/vendedor')
             }}
-            defaultValue="grupos"
+            defaultValue="vendedor"
           >
             <option value="departamentos" className="text-black">Aliados - Departamentos</option>
             <option value="grupos" className="text-black">Aliados - Grupos</option>
@@ -188,24 +149,6 @@ const ActivacionAliadosGrupos = () => {
           </div>
 
           <div className="flex items-center space-x-2">
-            <ActivacionExcelExportButton
-              filtros={filtrosSeleccionados}
-              rpcFunction="get_act_aliados_grupos_v3"
-              columns={[
-                { key: 'sucursal', label: 'SUCURSAL' },
-                { key: 'estado', label: 'ESTADO' },
-                { key: 'mes', label: 'MES' },
-                { key: 'grupo', label: 'GRUPO' },
-                { key: 'a2024', label: 'A2024', align: 'right' },
-                { key: 'c2024', label: 'C2024', align: 'right' },
-                { key: 'porcentaje_2024', label: '2024 (%)', align: 'right' },
-                { key: 'a2025', label: 'A2025', align: 'right' },
-                { key: 'c2025', label: 'C2025', align: 'right' },
-                { key: 'porcentaje_2025', label: '2025 (%)', align: 'right' }
-              ]}
-              filename="activacion_aliados_grupos"
-              title="Reporte de Activación - Aliados Grupos"
-            />
             <button onClick={refreshAllWidgets} className="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Refrescar" style={{ color: '#3b82f6' }}>
               <RefreshCw className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
@@ -223,6 +166,22 @@ const ActivacionAliadosGrupos = () => {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             {/* Contenedor de filtros */}
             <div className="grid grid-cols-2 sm:grid-cols-3 md:flex md:flex-wrap gap-3 sm:gap-4 md:gap-3 mt-3 md:mt-0">
+              {/* Filtro Año */}
+              <div className="flex items-center space-x-2 min-w-0">
+                <Calendar className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                <select 
+                  value={filtrosSeleccionados.anio}
+                  onChange={(e) => handleFiltroChange('anio', e.target.value)}
+                  className="border border-gray-200 rounded px-2 sm:px-3 py-1 text-sm bg-white text-gray-700 focus:border-gray-300 focus:outline-none min-w-0 flex-1 sm:flex-none sm:w-20 md:w-24"
+                  disabled={loading}
+                >
+                  <option value="All">Año</option>
+                  {filtrosData.anios.map(anio => (
+                    <option key={anio} value={anio}>{anio}</option>
+                  ))}
+                </select>
+              </div>
+
               {/* Filtro Mes */}
               <div className="flex items-center space-x-2 min-w-0">
                 <Calendar className="w-4 h-4 text-gray-500 flex-shrink-0" />
@@ -233,72 +192,24 @@ const ActivacionAliadosGrupos = () => {
                   disabled={loading}
                 >
                   <option value="All">Mes</option>
-                  {filtrosData.meses?.map(mes => (
+                  {filtrosData.meses.map(mes => (
                     <option key={mes} value={mes}>{mes}</option>
                   ))}
                 </select>
               </div>
 
-              {/* Filtro Región */}
+              {/* Filtro Código Ruta */}
               <div className="flex items-center space-x-2 min-w-0">
                 <MapPin className="w-4 h-4 text-gray-500 flex-shrink-0" />
                 <select 
-                  value={filtrosSeleccionados.region}
-                  onChange={(e) => handleFiltroChange('region', e.target.value)}
-                  className="border border-gray-200 rounded px-2 sm:px-3 py-1 text-sm bg-white text-gray-700 focus:border-gray-300 focus:outline-none min-w-0 flex-1 sm:flex-none sm:w-20 md:w-24"
+                  value={filtrosSeleccionados.codigoruta}
+                  onChange={(e) => handleFiltroChange('codigoruta', e.target.value)}
+                  className="border border-gray-200 rounded px-2 sm:px-3 py-1 text-sm bg-white text-gray-700 focus:border-gray-300 focus:outline-none min-w-0 flex-1 sm:flex-none sm:w-28 md:w-36"
                   disabled={loading}
                 >
-                  <option value="All">Región</option>
-                  {filtrosData.regiones?.map(region => (
-                    <option key={region} value={region}>{region}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Filtro Estado */}
-              <div className="flex items-center space-x-2 min-w-0">
-                <Building className="w-4 h-4 text-gray-500 flex-shrink-0" />
-                <select 
-                  value={filtrosSeleccionados.estado}
-                  onChange={(e) => handleFiltroChange('estado', e.target.value)}
-                  className="border border-gray-200 rounded px-2 sm:px-3 py-1 text-sm bg-white text-gray-700 focus:border-gray-300 focus:outline-none min-w-0 flex-1 sm:flex-none sm:w-20 md:w-24"
-                  disabled={loading}
-                >
-                  <option value="All">Estado</option>
-                  {filtrosData.estados?.map(estado => (
-                    <option key={estado} value={estado}>{estado}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Filtro Aliado */}
-              <div className="flex items-center space-x-2 min-w-0">
-                <Users className="w-4 h-4 text-gray-500 flex-shrink-0" />
-                <select 
-                  value={filtrosSeleccionados.aliado}
-                  onChange={(e) => handleFiltroChange('aliado', e.target.value)}
-                  className="border border-gray-200 rounded px-2 sm:px-3 py-1 text-sm bg-white text-gray-700 focus:border-gray-300 focus:outline-none min-w-0 flex-1 sm:flex-none sm:w-20 md:w-24"
-                  disabled={loading}
-                >
-                  <option value="All">Aliado</option>
-                  {filtrosData.aliados?.map(aliado => (
-                    <option key={aliado} value={aliado}>{aliado}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Filtro Sucursal */}
-              <div className="flex items-center space-x-2 min-w-0">
-                <Filter className="w-4 h-4 text-gray-500 flex-shrink-0" />
-                <select 
-                  value={filtrosSeleccionados.sucursal}
-                  onChange={(e) => handleFiltroChange('sucursal', e.target.value)}
-                  className="border border-gray-200 rounded px-2 sm:px-3 py-1 text-sm bg-white text-gray-700 focus:border-gray-300 focus:outline-none min-w-0 flex-1 sm:flex-none sm:w-20 md:w-24"
-                  disabled={loading}
-                >
-                  <option value="All">Sucursal</option>
-                  {filtrosData.sucursales?.map(sucursal => (
-                    <option key={sucursal} value={sucursal}>{sucursal}</option>
+                  <option value="All">Código Ruta</option>
+                  {filtrosData.codigorutas.map(codigoruta => (
+                    <option key={codigoruta} value={codigoruta}>{codigoruta}</option>
                   ))}
                 </select>
               </div>
@@ -306,24 +217,6 @@ const ActivacionAliadosGrupos = () => {
 
             {/* Iconos de acción en desktop */}
             <div className="hidden md:flex items-center space-x-2">
-              <ActivacionExcelExportButton
-                filtros={filtrosSeleccionados}
-                rpcFunction="get_act_aliados_grupos_v3"
-                columns={[
-                  { key: 'sucursal', label: 'SUCURSAL' },
-                  { key: 'estado', label: 'ESTADO' },
-                  { key: 'mes', label: 'MES' },
-                  { key: 'grupo', label: 'GRUPO' },
-                  { key: 'a2024', label: 'A2024', align: 'right' },
-                  { key: 'c2024', label: 'C2024', align: 'right' },
-                  { key: 'porcentaje_2024', label: '2024 (%)', align: 'right' },
-                  { key: 'a2025', label: 'A2025', align: 'right' },
-                  { key: 'c2025', label: 'C2025', align: 'right' },
-                  { key: 'porcentaje_2025', label: '2025 (%)', align: 'right' }
-                ]}
-                filename="activacion_aliados_grupos"
-                title="Reporte de Activación - Aliados Grupos"
-              />
               <button 
                 onClick={refreshAllWidgets}
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -365,26 +258,35 @@ const ActivacionAliadosGrupos = () => {
               borderLeftColor: '#ec1e06'
             }}
           >
-            Activación - Aliados Grupos
+            Activación - Vendedor
           </h1>
         </div>
         <div className="grid grid-cols-1 gap-6">
           <ActivacionDataTableWidget 
             ref={widgetRef}
             filtros={filtrosSeleccionados}
-            tipo="grupos"
-            rpcFunction="get_act_aliados_grupos_v3"
+            tipo="vendedor"
+            rpcFunction="get_act_vendedor_v2"
             columns={[
-              { key: 'sucursal', label: 'SUCURSAL', sortable: true, width: '250px' },
-              { key: 'estado', label: 'ESTADO', sortable: true },
+              { key: 'anio', label: 'AÑO', sortable: true },
               { key: 'mes', label: 'MES', sortable: true },
-              { key: 'grupo', label: 'GRUPO', sortable: true },
-              { key: 'a2024', label: 'A2024', sortable: true, align: 'right' },
-              { key: 'c2024', label: 'C2024', sortable: true, align: 'right' },
-              { key: 'porcentaje_2024', label: '2024 (%)', sortable: true, align: 'right' },
-              { key: 'a2025', label: 'A2025', sortable: true, align: 'right' },
-              { key: 'c2025', label: 'C2025', sortable: true, align: 'right' },
-              { key: 'porcentaje_2025', label: '2025 (%)', sortable: true, align: 'right' }
+              { key: 'codigoruta', label: 'CÓDIGO RUTA', sortable: true },
+              { key: 'vendedor', label: 'VENDEDOR', sortable: true, width: '250px' },
+              { key: 'porcentaje_acumulado_mes', label: '% ACUMULADO MES', sortable: true, align: 'right' },
+              { key: 'activacion_acumulada_mes', label: 'ACTIVACIÓN ACUMULADA', sortable: true, align: 'right' },
+              { key: 'cartera_general', label: 'CARTERA GENERAL', sortable: true, align: 'right' },
+              { key: 'cartera_semana2', label: 'CARTERA S2', sortable: true, align: 'right' },
+              { key: 'cartera_semana3', label: 'CARTERA S3', sortable: true, align: 'right' },
+              { key: 'cartera_semana4', label: 'CARTERA S4', sortable: true, align: 'right' },
+              { key: 'cartera_semana5', label: 'CARTERA S5', sortable: true, align: 'right' },
+              { key: 'activacion_semana2', label: 'ACTIVACIÓN S2', sortable: true, align: 'right' },
+              { key: 'activacion_semana3', label: 'ACTIVACIÓN S3', sortable: true, align: 'right' },
+              { key: 'activacion_semana4', label: 'ACTIVACIÓN S4', sortable: true, align: 'right' },
+              { key: 'activacion_semana5', label: 'ACTIVACIÓN S5', sortable: true, align: 'right' },
+              { key: 'porcentaje_semana2', label: '% S2', sortable: true, align: 'right' },
+              { key: 'porcentaje_semana3', label: '% S3', sortable: true, align: 'right' },
+              { key: 'porcentaje_semana4', label: '% S4', sortable: true, align: 'right' },
+              { key: 'porcentaje_semana5', label: '% S5', sortable: true, align: 'right' }
             ]}
           />
         </div>
@@ -396,4 +298,4 @@ const ActivacionAliadosGrupos = () => {
   )
 }
 
-export default ActivacionAliadosGrupos
+export default ActivacionVendedor

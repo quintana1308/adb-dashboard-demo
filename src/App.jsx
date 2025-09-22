@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext'
 import Login from './components/Login'
 import Dashboard from './components/Dashboard'
 import VentasConsolidadoGeneral from './components/VentasConsolidadoGeneral'
+import VentasGenerales from './components/VentasGenerales'
 import VentasDetallado from './components/VentasDetallado'
 import VentasRegionGrupoTipo from './components/VentasRegionGrupoTipo'
 import VentasRegionAliadoSku from './components/VentasRegionAliadoSku'
@@ -10,6 +11,7 @@ import ActivacionAliadosDepartamentos from './components/ActivacionAliadosDepart
 import ActivacionAliadosGrupos from './components/ActivacionAliadosGrupos'
 import ActivacionAliadosMarcas from './components/ActivacionAliadosMarcas'
 import ActivacionAliadosSku from './components/ActivacionAliadosSku'
+import ActivacionVendedor from './components/ActivacionVendedor'
 import FinanzasRentabilidad from './components/FinanzasRentabilidad'
 import FinanzasCobranza from './components/FinanzasCobranza'
 import FinanzasEgresos from './components/FinanzasEgresos'
@@ -81,6 +83,14 @@ function App() {
             } 
           />
           <Route 
+            path="/dashboard/ventas/ventas-generales" 
+            element={
+              <ProtectedRoute>
+                <VentasGenerales />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
             path="/dashboard/ventas/ventas" 
             element={
               <ProtectedRoute>
@@ -133,6 +143,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <ActivacionAliadosSku />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/dashboard/activacion/vendedor" 
+            element={
+              <ProtectedRoute>
+                <ActivacionVendedor />
               </ProtectedRoute>
             } 
           />

@@ -119,11 +119,12 @@ const SincronizacionVentasTable = () => {
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
       <div className="p-4 bg-[#1c398e] text-white font-semibold flex items-center justify-between">
         <span>Sincronización de ventas</span>
-        <SyncButton 
+        {/* Botón Sincronizar Datos temporalmente oculto */}
+        {/* <SyncButton 
           onSyncComplete={handleSyncComplete}
           buttonText="Sincronizar Datos"
           disabled={loading}
-        />
+        /> */}
       </div>
       
       <div className="overflow-x-auto">

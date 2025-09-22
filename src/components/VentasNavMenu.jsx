@@ -10,6 +10,11 @@ const VentasNavMenu = ({ currentPage }) => {
       path: '/dashboard/ventas/consolidado-general'
     },
     {
+      key: 'ventas-generales',
+      label: 'Ventas Generales',
+      path: '/dashboard/ventas/ventas-generales'
+    },
+    {
       key: 'ventas',
       label: 'Ventas',
       path: '/dashboard/ventas/ventas'
