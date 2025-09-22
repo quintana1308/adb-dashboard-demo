@@ -8,6 +8,7 @@ const FinanzasDataTableWidget = forwardRef(({
   totalsRpcFunction,
   columns,
   onTotalsChange,
+  onTotalUpdate,
   edgeFunctionName,
   totalsEdgeFunctionName
 }, ref) => {
@@ -33,6 +34,16 @@ const FinanzasDataTableWidget = forwardRef(({
     }
   }))
 
+  // Función para calcular el total de gastos generales
+  const calculateGastosGeneralesTotal = useCallback((dataArray) => {
+    if (!dataArray || dataArray.length === 0) return 0
+    
+    return dataArray.reduce((total, row) => {
+      const gastosGenerales = parseFloat(row.gastosgenerales) || 0
+      return total + gastosGenerales
+    }, 0)
+  }, [])
+
   useEffect(() => {
     setData([])
     setPage(1)
@@ -41,6 +52,16 @@ const FinanzasDataTableWidget = forwardRef(({
     fetchTotals()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filtros, sorting])
+
+  // Calcular y enviar el total cuando cambien los datos
+  useEffect(() => {
+    if (onTotalUpdate && data.length > 0) {
+      const total = calculateGastosGeneralesTotal(data)
+      onTotalUpdate(total)
+    } else if (onTotalUpdate && data.length === 0) {
+      onTotalUpdate(0)
+    }
+  }, [data, onTotalUpdate, calculateGastosGeneralesTotal])
 
   const lastElementRef = useCallback(node => {
     if (loading || loadingMore) return

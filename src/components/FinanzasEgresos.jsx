@@ -11,7 +11,8 @@ import {
   Tag,
   Building,
   Hash,
-  FileText
+  FileText,
+  DollarSign
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import Footer from './Footer'
@@ -41,6 +42,7 @@ const FinanzasEgresos = () => {
     nivelcuenta: 'All'
   })
   const [filtrosColapsados, setFiltrosColapsados] = useState(true)
+  const [totalGastosGenerales, setTotalGastosGenerales] = useState(0)
 
   // Buscador de cuenta
   const [cuentaSearchTerm, setCuentaSearchTerm] = useState('')
@@ -50,6 +52,12 @@ const FinanzasEgresos = () => {
   useEffect(() => {
     fetchFiltros()
   }, [])
+
+  // Calcular total cuando cambien los filtros
+  useEffect(() => {
+    fetchTotalGastosGenerales()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filtrosSeleccionados])
 
   const fetchFiltros = async () => {
     if (loading) return // Prevenir llamados dobles
@@ -87,6 +95,7 @@ const FinanzasEgresos = () => {
 
   const refreshAll = () => {
     fetchFiltros()
+    fetchTotalGastosGenerales()
     if (widgetRef.current?.refreshData) {
       widgetRef.current.refreshData()
     }
@@ -97,6 +106,54 @@ const FinanzasEgresos = () => {
       ...prev,
       [tipo]: valor
     }))
+  }
+
+  // Función para obtener el total real de gastos generales
+  const fetchTotalGastosGenerales = async () => {
+    try {
+      const params = {}
+      
+      // Aplicar los mismos filtros que en la tabla (solo los que existen en la tabla EGRESOS)
+      if (filtrosSeleccionados.anio !== 'All') params.p_anio = filtrosSeleccionados.anio
+      if (filtrosSeleccionados.mes !== 'All') params.p_mes = filtrosSeleccionados.mes
+      if (filtrosSeleccionados.dia !== 'All') params.p_dia = filtrosSeleccionados.dia
+      if (filtrosSeleccionados.clasificacion !== 'All') params.p_clasificacion = filtrosSeleccionados.clasificacion
+      if (filtrosSeleccionados.cuenta !== 'All') params.p_cuenta = filtrosSeleccionados.cuenta
+      if (filtrosSeleccionados.centrodecosto !== 'All') params.p_centrodecosto = filtrosSeleccionados.centrodecosto
+      // Nota: nivelcuenta no existe en la tabla EGRESOS, se omite
+
+      console.log('Fetching total with params:', params)
+      
+      const { data: result, error } = await supabase.rpc('get_egresos_total_v3', params)
+      
+      if (error) {
+        console.error('Error fetching total:', error)
+        return
+      }
+
+      const total = result?.[0]?.total_gastos_generales || 0
+      console.log('Total fetched:', total)
+      setTotalGastosGenerales(total)
+      
+    } catch (error) {
+      console.error('Error calculating total:', error)
+    }
+  }
+
+  // Función para actualizar el total desde el widget (ya no se usa)
+  const handleTotalUpdate = (total) => {
+    // Esta función ya no se usa, el total se calcula con RPC
+    console.log('Widget total (ignored):', total)
+  }
+
+  // Formatear número como moneda
+  const formatCurrency = (value) => {
+    return new Intl.NumberFormat('es-CO', {
+      style: 'currency',
+      currency: 'COP',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(value || 0)
   }
 
   const limpiarFiltros = async () => {
@@ -112,6 +169,7 @@ const FinanzasEgresos = () => {
     setCuentaSearchTerm('')
     setIsCuentaDropdownOpen(false)
     await fetchFiltros()
+    fetchTotalGastosGenerales()
   }
 
   // Filtrar cuentas basado en el término de búsqueda
@@ -370,28 +428,48 @@ const FinanzasEgresos = () => {
           </h1>
         </div>
 
-        {/* Tabla con ancho completo */}
-        <div className="w-full">
-          <FinanzasDataTableWidget
-            ref={widgetRef}
-            filtros={filtrosSeleccionados}
-            rpcFunction="get_egresos_v2"
-            columns={[
-              { key: 'anio', label: 'AÑO', sortable: true },
-              { key: 'mes', label: 'MES', sortable: true },
-              { key: 'dia', label: 'DÍA', sortable: true },
-              { key: 'gastosgenerales', label: 'GASTOS GENERALES', sortable: true, align: 'right' },
-              { key: 'clasificacion', label: 'CLASIFICACIÓN', sortable: true },
-              { key: 'cuentacodigo', label: 'CÓDIGO CUENTA', sortable: true },
-              { key: 'cuenta', label: 'CUENTA', sortable: true },
-              { key: 'centrodecosto', label: 'CENTRO DE COSTO', sortable: true },
-              { key: 'descripcion', label: 'DESCRIPCIÓN', sortable: true },
-              { key: 'comprobante', label: 'COMPROBANTE', sortable: true, align: 'right' },
-              { key: 'tipo', label: 'TIPO', sortable: true },
-              { key: 'documento', label: 'DOCUMENTO', sortable: true },
-              { key: 'fechadocumento', label: 'FECHA DOCUMENTO', sortable: true }
-            ]}
-          />
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+          {/* Tabla (ocupa 4 columnas en desktop) */}
+          <div className="lg:col-span-4">
+            <FinanzasDataTableWidget
+              ref={widgetRef}
+              filtros={filtrosSeleccionados}
+              rpcFunction="get_egresos_v2"
+              onTotalUpdate={handleTotalUpdate}
+              columns={[
+                { key: 'anio', label: 'AÑO', sortable: true },
+                { key: 'mes', label: 'MES', sortable: true },
+                { key: 'dia', label: 'DÍA', sortable: true },
+                { key: 'gastosgenerales', label: 'GASTOS GENERALES', sortable: true, align: 'right' },
+                { key: 'clasificacion', label: 'CLASIFICACIÓN', sortable: true },
+                { key: 'cuentacodigo', label: 'CÓDIGO CUENTA', sortable: true },
+                { key: 'cuenta', label: 'CUENTA', sortable: true },
+                { key: 'centrodecosto', label: 'CENTRO DE COSTO', sortable: true },
+                { key: 'descripcion', label: 'DESCRIPCIÓN', sortable: true },
+                { key: 'comprobante', label: 'COMPROBANTE', sortable: true, align: 'right' },
+                { key: 'tipo', label: 'TIPO', sortable: true },
+                { key: 'documento', label: 'DOCUMENTO', sortable: true },
+                { key: 'fechadocumento', label: 'FECHA DOCUMENTO', sortable: true }
+              ]}
+            />
+          </div>
+
+          {/* Métricas a la derecha (más compactas) */}
+          <div className="space-y-3">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-xs text-gray-500">Gastos Generales Total</div>
+                  <div id="gastosGeneralesTotal" className="text-lg font-bold text-gray-900">
+                    {formatCurrency(totalGastosGenerales)}
+                  </div>
+                </div>
+                <div className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center">
+                  <DollarSign className="w-4 h-4 text-red-600" />
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
