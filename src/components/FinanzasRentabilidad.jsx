@@ -42,7 +42,15 @@ const FinanzasRentabilidad = () => {
   })
   const [filtrosColapsados, setFiltrosColapsados] = useState(true)
 
-  // Buscador del producto
+  // Buscadores
+  const [clienteSearchTerm, setClienteSearchTerm] = useState('')
+  const [isClienteDropdownOpen, setIsClienteDropdownOpen] = useState(false)
+  const clienteDropdownRef = useRef(null)
+
+  const [vendedorSearchTerm, setVendedorSearchTerm] = useState('')
+  const [isVendedorDropdownOpen, setIsVendedorDropdownOpen] = useState(false)
+  const vendedorDropdownRef = useRef(null)
+
   const [prodSearchTerm, setProdSearchTerm] = useState('')
   const [isProdDropdownOpen, setIsProdDropdownOpen] = useState(false)
   const prodDropdownRef = useRef(null)
@@ -107,17 +115,41 @@ const FinanzasRentabilidad = () => {
       categoria: 'All',
       producto: 'All'
     })
+    setClienteSearchTerm('')
+    setIsClienteDropdownOpen(false)
+    setVendedorSearchTerm('')
+    setIsVendedorDropdownOpen(false)
     setProdSearchTerm('')
     setIsProdDropdownOpen(false)
     await fetchFiltros()
   }
 
-  // Filtrar productos basado en el término de búsqueda
+  // Filtrar basado en términos de búsqueda
+  const filteredClientes = filtrosData.clientes?.filter(c =>
+    (c || '').toLowerCase().includes(clienteSearchTerm.toLowerCase())
+  ) || []
+
+  const filteredVendedores = filtrosData.vendedores?.filter(v =>
+    (v || '').toLowerCase().includes(vendedorSearchTerm.toLowerCase())
+  ) || []
+
   const filteredProductos = filtrosData.productos?.filter(p =>
     (p || '').toLowerCase().includes(prodSearchTerm.toLowerCase())
   ) || []
 
-  // Manejar selección de producto
+  // Manejar selecciones
+  const handleClienteSelect = (cliente) => {
+    handleFiltroChange('cliente', cliente)
+    setClienteSearchTerm('')
+    setIsClienteDropdownOpen(false)
+  }
+
+  const handleVendedorSelect = (vendedor) => {
+    handleFiltroChange('vendedor', vendedor)
+    setVendedorSearchTerm('')
+    setIsVendedorDropdownOpen(false)
+  }
+
   const handleProductoSelect = (prod) => {
     handleFiltroChange('producto', prod)
     setProdSearchTerm('')
@@ -126,6 +158,12 @@ const FinanzasRentabilidad = () => {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
+      if (clienteDropdownRef.current && !clienteDropdownRef.current.contains(event.target)) {
+        setIsClienteDropdownOpen(false)
+      }
+      if (vendedorDropdownRef.current && !vendedorDropdownRef.current.contains(event.target)) {
+        setIsVendedorDropdownOpen(false)
+      }
       if (prodDropdownRef.current && !prodDropdownRef.current.contains(event.target)) {
         setIsProdDropdownOpen(false)
       }
@@ -180,14 +218,14 @@ const FinanzasRentabilidad = () => {
         {/* Filtros en desktop */}
         <div className={`${filtrosColapsados ? 'hidden' : 'block'} md:block`}>
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4 md:gap-3 mt-3 md:mt-0">
+            <div className="flex flex-wrap items-center gap-3 mt-3 md:mt-0 w-full">
               {/* Año */}
-              <div className="flex items-center space-x-2 min-w-0">
+              <div className="flex items-center space-x-2">
                 <Calendar className="w-4 h-4 text-gray-500 flex-shrink-0" />
                 <select 
                   value={filtrosSeleccionados.anio}
                   onChange={(e) => handleFiltroChange('anio', e.target.value)}
-                  className="border border-gray-200 rounded px-2 sm:px-3 py-1 text-sm bg-white text-gray-700 focus:border-gray-300 focus:outline-none min-w-0 flex-1 sm:flex-none sm:w-24"
+                  className="border border-gray-200 rounded px-2 sm:px-3 py-1 text-sm bg-white text-gray-700 focus:border-gray-300 focus:outline-none w-20"
                   disabled={loading}
                 >
                   <option value="All">Año</option>
@@ -197,12 +235,12 @@ const FinanzasRentabilidad = () => {
                 </select>
               </div>
               {/* Mes */}
-              <div className="flex items-center space-x-2 min-w-0">
+              <div className="flex items-center space-x-2">
                 <Calendar className="w-4 h-4 text-gray-500 flex-shrink-0" />
                 <select 
                   value={filtrosSeleccionados.mes}
                   onChange={(e) => handleFiltroChange('mes', e.target.value)}
-                  className="border border-gray-200 rounded px-2 sm:px-3 py-1 text-sm bg-white text-gray-700 focus:border-gray-300 focus:outline-none min-w-0 flex-1 sm:flex-none sm:w-24"
+                  className="border border-gray-200 rounded px-2 sm:px-3 py-1 text-sm bg-white text-gray-700 focus:border-gray-300 focus:outline-none w-20"
                   disabled={loading}
                 >
                   <option value="All">Mes</option>
@@ -211,66 +249,199 @@ const FinanzasRentabilidad = () => {
                   ))}
                 </select>
               </div>
-              {/* Cliente */}
-              <div className="flex items-center space-x-2 min-w-0">
+              {/* Cliente con buscador */}
+              <div className="flex items-center space-x-2 relative" ref={clienteDropdownRef}>
                 <Users className="w-4 h-4 text-gray-500 flex-shrink-0" />
-                <select 
-                  value={filtrosSeleccionados.cliente}
-                  onChange={(e) => handleFiltroChange('cliente', e.target.value)}
-                  className="border border-gray-200 rounded px-2 sm:px-3 py-1 text-sm bg-white text-gray-700 focus:border-gray-300 focus:outline-none min-w-0 flex-1 sm:flex-none sm:w-32"
-                  disabled={loading}
-                >
-                  <option value="All">Cliente</option>
-                  {filtrosData.clientes?.map(c => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <div 
+                    className="border border-gray-200 rounded px-2 sm:px-3 py-1 text-sm bg-white text-gray-700 focus:border-gray-300 cursor-pointer flex items-center justify-between appearance-none w-32"
+                    onClick={() => setIsClienteDropdownOpen(!isClienteDropdownOpen)}
+                    style={{ height: '32px' }}
+                  >
+                    <span className="truncate text-sm">
+                      {filtrosSeleccionados.cliente === 'All' ? 'Cliente' : filtrosSeleccionados.cliente}
+                    </span>
+                    <svg className={`w-4 h-4 text-gray-400 transition-transform ${isClienteDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                  {isClienteDropdownOpen && (
+                    <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded shadow-lg z-[60] max-h-64 overflow-hidden w-80">
+                      <div className="p-2 border-b border-gray-100">
+                        <div className="relative">
+                          <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400" />
+                          <input
+                            type="text"
+                            placeholder="Buscar cliente..."
+                            value={clienteSearchTerm}
+                            onChange={(e) => setClienteSearchTerm(e.target.value)}
+                            className="w-full pl-7 pr-7 py-1 text-xs border border-gray-200 rounded focus:outline-none focus:border-gray-300"
+                            autoFocus
+                          />
+                          {clienteSearchTerm && (
+                            <button
+                              onClick={() => setClienteSearchTerm('')}
+                              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      <div className="max-h-48 overflow-y-auto">
+                        {filteredClientes.length > 0 ? (
+                          <>
+                            <div 
+                              className="px-3 py-2 text-sm hover:bg-gray-50 cursor-pointer border-b border-gray-100"
+                              onClick={() => {
+                                handleFiltroChange('cliente', 'All')
+                                setIsClienteDropdownOpen(false)
+                                setClienteSearchTerm('')
+                              }}
+                            >
+                              <span className="font-medium text-gray-900">Todos los clientes</span>
+                            </div>
+                            {filteredClientes.map(cliente => (
+                              <div 
+                                key={cliente}
+                                className="px-3 py-2 text-sm hover:bg-gray-50 cursor-pointer"
+                                onClick={() => {
+                                  handleFiltroChange('cliente', cliente)
+                                  setIsClienteDropdownOpen(false)
+                                  setClienteSearchTerm('')
+                                }}
+                              >
+                                {cliente}
+                              </div>
+                            ))}
+                          </>
+                        ) : clienteSearchTerm ? (
+                          <div className="px-3 py-2 text-sm text-gray-500 italic">
+                            No se encontraron clientes que coincidan con "{clienteSearchTerm}"
+                          </div>
+                        ) : (
+                          <div className="px-3 py-2 text-sm text-gray-500 italic">
+                            No hay clientes disponibles
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
-              {/* Vendedor */}
-              <div className="flex items-center space-x-2 min-w-0">
+              {/* Vendedor con buscador */}
+              <div className="flex items-center space-x-2 relative" ref={vendedorDropdownRef}>
                 <User className="w-4 h-4 text-gray-500 flex-shrink-0" />
-                <select 
-                  value={filtrosSeleccionados.vendedor}
-                  onChange={(e) => handleFiltroChange('vendedor', e.target.value)}
-                  className="border border-gray-200 rounded px-2 sm:px-3 py-1 text-sm bg-white text-gray-700 focus:border-gray-300 focus:outline-none min-w-0 flex-1 sm:flex-none sm:w-32"
-                  disabled={loading}
-                >
-                  <option value="All">Vendedor</option>
-                  {filtrosData.vendedores?.map(v => (
-                    <option key={v} value={v}>{v}</option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <div 
+                    className="border border-gray-200 rounded px-2 sm:px-3 py-1 text-sm bg-white text-gray-700 focus:border-gray-300 cursor-pointer flex items-center justify-between appearance-none w-32"
+                    onClick={() => setIsVendedorDropdownOpen(!isVendedorDropdownOpen)}
+                    style={{ height: '32px' }}
+                  >
+                    <span className="truncate text-sm">
+                      {filtrosSeleccionados.vendedor === 'All' ? 'Vendedor' : filtrosSeleccionados.vendedor}
+                    </span>
+                    <svg className={`w-4 h-4 text-gray-400 transition-transform ${isVendedorDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                  {isVendedorDropdownOpen && (
+                    <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded shadow-lg z-[60] max-h-64 overflow-hidden w-80">
+                      <div className="p-2 border-b border-gray-100">
+                        <div className="relative">
+                          <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400" />
+                          <input
+                            type="text"
+                            placeholder="Buscar vendedor..."
+                            value={vendedorSearchTerm}
+                            onChange={(e) => setVendedorSearchTerm(e.target.value)}
+                            className="w-full pl-7 pr-7 py-1 text-xs border border-gray-200 rounded focus:outline-none focus:border-gray-300"
+                            autoFocus
+                          />
+                          {vendedorSearchTerm && (
+                            <button
+                              onClick={() => setVendedorSearchTerm('')}
+                              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      <div className="max-h-48 overflow-y-auto">
+                        {filteredVendedores.length > 0 ? (
+                          <>
+                            <div 
+                              className="px-3 py-2 text-sm hover:bg-gray-50 cursor-pointer border-b border-gray-100"
+                              onClick={() => {
+                                handleFiltroChange('vendedor', 'All')
+                                setIsVendedorDropdownOpen(false)
+                                setVendedorSearchTerm('')
+                              }}
+                            >
+                              <span className="font-medium text-gray-900">Todos los vendedores</span>
+                            </div>
+                            {filteredVendedores.map(vendedor => (
+                              <div 
+                                key={vendedor}
+                                className="px-3 py-2 text-sm hover:bg-gray-50 cursor-pointer"
+                                onClick={() => {
+                                  handleFiltroChange('vendedor', vendedor)
+                                  setIsVendedorDropdownOpen(false)
+                                  setVendedorSearchTerm('')
+                                }}
+                              >
+                                {vendedor}
+                              </div>
+                            ))}
+                          </>
+                        ) : vendedorSearchTerm ? (
+                          <div className="px-3 py-2 text-sm text-gray-500 italic">
+                            No se encontraron vendedores que coincidan con "{vendedorSearchTerm}"
+                          </div>
+                        ) : (
+                          <div className="px-3 py-2 text-sm text-gray-500 italic">
+                            No hay vendedores disponibles
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
               {/* Categoria */}
-              <div className="flex items-center space-x-2 min-w-0">
+              <div className="flex items-center space-x-2">
                 <Tag className="w-4 h-4 text-gray-500 flex-shrink-0" />
                 <select 
                   value={filtrosSeleccionados.categoria}
                   onChange={(e) => handleFiltroChange('categoria', e.target.value)}
-                  className="border border-gray-200 rounded px-2 sm:px-3 py-1 text-sm bg-white text-gray-700 focus:border-gray-300 focus:outline-none min-w-0 flex-1 sm:flex-none sm:w-32"
+                  className="border border-gray-200 rounded px-2 sm:px-3 py-1 text-sm bg-white text-gray-700 focus:border-gray-300 focus:outline-none w-32"
                   disabled={loading}
                 >
-                  <option value="All">Categoría</option>
+                  <option value="All">Categoria</option>
                   {filtrosData.categorias?.map(cat => (
                     <option key={cat} value={cat}>{cat}</option>
                   ))}
                 </select>
               </div>
               {/* Producto con buscador */}
-              <div className="flex items-center space-x-2 min-w-0 relative" ref={prodDropdownRef}>
+              <div className="flex items-center space-x-2 relative" ref={prodDropdownRef}>
                 <Package className="w-4 h-4 text-gray-500 flex-shrink-0" />
-                <div className="relative min-w-0 flex-1 sm:flex-none sm:w-40 md:w-48">
+                <div className="relative">
                   <div 
-                    className="border border-gray-200 rounded px-2 sm:px-3 py-1 text-sm bg-white text-gray-700 focus:border-gray-300 cursor-pointer flex items-center justify-between min-h-[32px]"
+                    className="border border-gray-200 rounded px-2 sm:px-3 py-1 text-sm bg-white text-gray-700 focus:border-gray-300 cursor-pointer flex items-center justify-between appearance-none w-32"
                     onClick={() => setIsProdDropdownOpen(!isProdDropdownOpen)}
+                    style={{ height: '32px' }}
                   >
-                    <span className="truncate">
+                    <span className="truncate text-sm">
                       {filtrosSeleccionados.producto === 'All' ? 'Producto' : filtrosSeleccionados.producto}
                     </span>
-                    <span className={`w-3 h-3 text-gray-500 ${isProdDropdownOpen ? 'rotate-180' : ''}`}>▼</span>
+                    <svg className={`w-4 h-4 text-gray-400 transition-transform ${isProdDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
                   </div>
                   {isProdDropdownOpen && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded shadow-lg z-50 max-h-64 overflow-hidden">
+                    <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded shadow-lg z-[60] max-h-64 overflow-hidden w-96">
                       <div className="p-2 border-b border-gray-100">
                         <div className="relative">
                           <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400" />
@@ -293,18 +464,32 @@ const FinanzasRentabilidad = () => {
                         </div>
                       </div>
                       <div className="max-h-48 overflow-y-auto">
-                        <div 
-                          className="px-3 py-2 text-sm hover:bg-gray-50 cursor-pointer border-b border-gray-100"
-                          onClick={() => handleProductoSelect('All')}
-                        >
-                          <span className="font-medium text-gray-500">Todos los productos</span>
-                        </div>
                         {filteredProductos.length > 0 ? (
-                          filteredProductos.map(p => (
-                            <div key={p} className="px-3 py-2 text-sm hover:bg-gray-50 cursor-pointer" onClick={() => handleProductoSelect(p)}>
-                              {p}
+                          <>
+                            <div 
+                              className="px-3 py-2 text-sm hover:bg-gray-50 cursor-pointer border-b border-gray-100"
+                              onClick={() => {
+                                handleFiltroChange('producto', 'All')
+                                setIsProdDropdownOpen(false)
+                                setProdSearchTerm('')
+                              }}
+                            >
+                              <span className="font-medium text-gray-900">Todos los productos</span>
                             </div>
-                          ))
+                            {filteredProductos.map(producto => (
+                              <div 
+                                key={producto}
+                                className="px-3 py-2 text-sm hover:bg-gray-50 cursor-pointer"
+                                onClick={() => {
+                                  handleFiltroChange('producto', producto)
+                                  setIsProdDropdownOpen(false)
+                                  setProdSearchTerm('')
+                                }}
+                              >
+                                {producto}
+                              </div>
+                            ))}
+                          </>
                         ) : prodSearchTerm ? (
                           <div className="px-3 py-2 text-sm text-gray-500 italic">
                             No se encontraron productos que coincidan con "{prodSearchTerm}"
@@ -322,7 +507,7 @@ const FinanzasRentabilidad = () => {
             </div>
 
             {/* Iconos de acción en desktop */}
-            <div className="hidden md:flex items-center space-x-2">
+            <div className="hidden md:flex items-center space-x-2 ml-auto">
               <button onClick={refreshAll} className="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Refrescar" style={{ color: '#3b82f6' }}>
                 <RefreshCw className="w-5 h-5" />
               </button>

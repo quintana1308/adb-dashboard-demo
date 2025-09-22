@@ -57,12 +57,15 @@ const VentasGenerales = () => {
   })
   const [filtrosColapsados, setFiltrosColapsados] = useState(true)
 
-  // Buscador del producto
+  // Estados para dropdowns con buscador
+  const [diaSearchTerm, setDiaSearchTerm] = useState('')
+  const [isDiaDropdownOpen, setIsDiaDropdownOpen] = useState(false)
+  const diaDropdownRef = useRef(null)
+
   const [prodSearchTerm, setProdSearchTerm] = useState('')
   const [isProdDropdownOpen, setIsProdDropdownOpen] = useState(false)
   const prodDropdownRef = useRef(null)
   
-  // Estados para otros dropdowns con buscador
   const [clienteSearchTerm, setClienteSearchTerm] = useState('')
   const [isClienteDropdownOpen, setIsClienteDropdownOpen] = useState(false)
   const clienteDropdownRef = useRef(null)
@@ -143,6 +146,8 @@ const VentasGenerales = () => {
       producto: 'All',
       categoria: 'All'
     })
+    setDiaSearchTerm('')
+    setIsDiaDropdownOpen(false)
     setProdSearchTerm('')
     setIsProdDropdownOpen(false)
     setClienteSearchTerm('')
@@ -156,32 +161,39 @@ const VentasGenerales = () => {
     await fetchFiltros()
   }
 
-  // Filtrar productos basado en el término de búsqueda
+  // Filtrar basado en términos de búsqueda
+  const filteredDias = filtrosData.dias?.filter(d =>
+    (d || '').toLowerCase().includes(diaSearchTerm.toLowerCase()) ||
+    new Date(d).toLocaleDateString().toLowerCase().includes(diaSearchTerm.toLowerCase())
+  ) || []
+
   const filteredProductos = filtrosData.productos?.filter(p =>
     (p || '').toLowerCase().includes(prodSearchTerm.toLowerCase())
   ) || []
 
-  // Filtrar clientes basado en el término de búsqueda
   const filteredClientes = filtrosData.clientes?.filter(c =>
     (c || '').toLowerCase().includes(clienteSearchTerm.toLowerCase())
   ) || []
 
-  // Filtrar vendedores basado en el término de búsqueda
   const filteredVendedores = filtrosData.vendedores?.filter(v =>
     (v || '').toLowerCase().includes(vendedorSearchTerm.toLowerCase())
   ) || []
 
-  // Filtrar productoids basado en el término de búsqueda
   const filteredProductoids = filtrosData.productoids?.filter(pid =>
     (pid || '').toLowerCase().includes(productoidSearchTerm.toLowerCase())
   ) || []
 
-  // Filtrar categorias basado en el término de búsqueda
   const filteredCategorias = filtrosData.categorias?.filter(cat =>
     (cat || '').toLowerCase().includes(categoriaSearchTerm.toLowerCase())
   ) || []
 
-  // Manejar selección de producto
+  // Manejar selecciones
+  const handleDiaSelect = (dia) => {
+    handleFiltroChange('dia', dia)
+    setDiaSearchTerm('')
+    setIsDiaDropdownOpen(false)
+  }
+
   const handleProductoSelect = (prod) => {
     handleFiltroChange('producto', prod)
     setProdSearchTerm('')
@@ -190,6 +202,9 @@ const VentasGenerales = () => {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
+      if (diaDropdownRef.current && !diaDropdownRef.current.contains(event.target)) {
+        setIsDiaDropdownOpen(false)
+      }
       if (prodDropdownRef.current && !prodDropdownRef.current.contains(event.target)) {
         setIsProdDropdownOpen(false)
       }
@@ -276,20 +291,85 @@ const VentasGenerales = () => {
                   ))}
                 </select>
               </div>
-              {/* Día */}
-              <div className="flex items-center space-x-2">
+              {/* Día con buscador */}
+              <div className="flex items-center space-x-2 relative" ref={diaDropdownRef}>
                 <Calendar className="w-4 h-4 text-gray-500 flex-shrink-0" />
-                <select 
-                  value={filtrosSeleccionados.dia}
-                  onChange={(e) => handleFiltroChange('dia', e.target.value)}
-                  className="border border-gray-200 rounded px-2 sm:px-3 py-1 text-sm bg-white text-gray-700 focus:border-gray-300 focus:outline-none w-24"
-                  disabled={loading}
-                >
-                  <option value="All">Día</option>
-                  {filtrosData.dias?.map(d => (
-                    <option key={d} value={d}>{d}</option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <div 
+                    className="border border-gray-200 rounded px-2 sm:px-3 py-1 text-sm bg-white text-gray-700 focus:border-gray-300 cursor-pointer flex items-center justify-between appearance-none w-24"
+                    onClick={() => setIsDiaDropdownOpen(!isDiaDropdownOpen)}
+                    style={{ height: '32px' }}
+                  >
+                    <span className="truncate text-sm">
+                      {filtrosSeleccionados.dia === 'All' ? 'Día' : new Date(filtrosSeleccionados.dia).toLocaleDateString()}
+                    </span>
+                    <svg className={`w-4 h-4 text-gray-400 transition-transform ${isDiaDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                  {isDiaDropdownOpen && (
+                    <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded shadow-lg z-[60] max-h-64 overflow-hidden w-96">
+                      <div className="p-2 border-b border-gray-100">
+                        <div className="relative">
+                          <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400" />
+                          <input
+                            type="text"
+                            placeholder="Buscar día..."
+                            value={diaSearchTerm}
+                            onChange={(e) => setDiaSearchTerm(e.target.value)}
+                            className="w-full pl-7 pr-7 py-1 text-xs border border-gray-200 rounded focus:outline-none focus:border-gray-300"
+                            autoFocus
+                          />
+                          {diaSearchTerm && (
+                            <button
+                              onClick={() => setDiaSearchTerm('')}
+                              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      <div className="max-h-48 overflow-y-auto">
+                        {filteredDias.length > 0 ? (
+                          <>
+                            <div 
+                              className="px-3 py-2 text-sm hover:bg-gray-50 cursor-pointer border-b border-gray-100"
+                              onClick={() => {
+                                handleFiltroChange('dia', 'All')
+                                setIsDiaDropdownOpen(false)
+                                setDiaSearchTerm('')
+                              }}
+                            >
+                              <span className="font-medium text-gray-900">Todos los días</span>
+                            </div>
+                            {filteredDias.map(dia => (
+                              <div 
+                                key={dia}
+                                className="px-3 py-2 text-sm hover:bg-gray-50 cursor-pointer"
+                                onClick={() => {
+                                  handleFiltroChange('dia', dia)
+                                  setIsDiaDropdownOpen(false)
+                                  setDiaSearchTerm('')
+                                }}
+                              >
+                                {new Date(dia).toLocaleDateString()}
+                              </div>
+                            ))}
+                          </>
+                        ) : diaSearchTerm ? (
+                          <div className="px-3 py-2 text-sm text-gray-500 italic">
+                            No se encontraron días que coincidan con "{diaSearchTerm}"
+                          </div>
+                        ) : (
+                          <div className="px-3 py-2 text-sm text-gray-500 italic">
+                            No hay días disponibles
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
               {/* Cliente con buscador */}
               <div className="flex items-center space-x-2 relative" ref={clienteDropdownRef}>
@@ -308,7 +388,7 @@ const VentasGenerales = () => {
                     </svg>
                   </div>
                   {isClienteDropdownOpen && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded shadow-lg z-[60] max-h-64 overflow-hidden">
+                    <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded shadow-lg z-[60] max-h-64 overflow-hidden w-96">
                       <div className="p-2 border-b border-gray-100">
                         <div className="relative">
                           <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400" />
@@ -388,7 +468,7 @@ const VentasGenerales = () => {
                     </svg>
                   </div>
                   {isVendedorDropdownOpen && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded shadow-lg z-[60] max-h-64 overflow-hidden">
+                    <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded shadow-lg z-[60] max-h-64 overflow-hidden w-96">
                       <div className="p-2 border-b border-gray-100">
                         <div className="relative">
                           <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400" />
@@ -456,19 +536,19 @@ const VentasGenerales = () => {
                 <Hash className="w-4 h-4 text-gray-500 flex-shrink-0" />
                 <div className="relative">
                   <div 
-                    className="border border-gray-200 rounded px-2 sm:px-3 py-1 text-sm bg-white text-gray-700 focus:border-gray-300 cursor-pointer flex items-center justify-between appearance-none w-28"
+                    className="border border-gray-200 rounded px-2 sm:px-3 py-1 text-sm bg-white text-gray-700 focus:border-gray-300 cursor-pointer flex items-center justify-between appearance-none w-40"
                     onClick={() => setIsProductoidDropdownOpen(!isProductoidDropdownOpen)}
                     style={{ height: '32px' }}
                   >
                     <span className="truncate text-sm">
-                      {filtrosSeleccionados.productoid === 'All' ? 'Producto ID' : filtrosSeleccionados.productoid}
+                      {filtrosSeleccionados.productoid === 'All' ? 'Codigo Producto' : filtrosSeleccionados.productoid}
                     </span>
                     <svg className={`w-4 h-4 text-gray-400 transition-transform ${isProductoidDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </div>
                   {isProductoidDropdownOpen && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded shadow-lg z-[60] max-h-64 overflow-hidden">
+                    <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded shadow-lg z-[60] max-h-64 overflow-hidden w-96">
                       <div className="p-2 border-b border-gray-100">
                         <div className="relative">
                           <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400" />
@@ -548,7 +628,7 @@ const VentasGenerales = () => {
                     </svg>
                   </div>
                   {isProdDropdownOpen && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded shadow-lg z-[60] max-h-64 overflow-hidden">
+                    <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded shadow-lg z-[60] max-h-64 overflow-hidden w-96">
                       <div className="p-2 border-b border-gray-100">
                         <div className="relative">
                           <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400" />
@@ -628,7 +708,7 @@ const VentasGenerales = () => {
                     </svg>
                   </div>
                   {isCategoriaDropdownOpen && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded shadow-lg z-[60] max-h-64 overflow-hidden">
+                    <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded shadow-lg z-[60] max-h-64 overflow-hidden w-96">
                       <div className="p-2 border-b border-gray-100">
                         <div className="relative">
                           <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400" />

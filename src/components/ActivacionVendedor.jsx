@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Calendar, MapPin, Filter, RefreshCw, FilterX, Maximize, ChevronDown, ChevronUp, TrendingUp, Users, Percent, FileText } from 'lucide-react'
+import { Calendar, MapPin, Filter, RefreshCw, FilterX, Maximize, ChevronDown, ChevronUp, TrendingUp, Users, Percent, FileText, Search, X } from 'lucide-react'
 import ActivacionDataTableWidget from './widgets/ActivacionDataTableWidget'
 import { supabase } from '../lib/supabase'
 import Footer from './Footer'
@@ -21,6 +21,11 @@ const ActivacionVendedor = () => {
     codigoruta: 'All'
   })
   const [filtrosColapsados, setFiltrosColapsados] = useState(true)
+
+  // Buscador de código de ruta
+  const [codigoRutaSearchTerm, setCodigoRutaSearchTerm] = useState('')
+  const [isCodigoRutaDropdownOpen, setIsCodigoRutaDropdownOpen] = useState(false)
+  const codigoRutaDropdownRef = useRef(null)
 
   // Cargar filtros al montar el componente
   useEffect(() => {
@@ -76,8 +81,33 @@ const ActivacionVendedor = () => {
       mes: 'All',
       codigoruta: 'All'
     })
+    setCodigoRutaSearchTerm('')
+    setIsCodigoRutaDropdownOpen(false)
     await fetchFiltros()
   }
+
+  // Filtrar códigos de ruta basado en el término de búsqueda
+  const filteredCodigoRutas = filtrosData.codigorutas?.filter(cr =>
+    (cr || '').toLowerCase().includes(codigoRutaSearchTerm.toLowerCase())
+  ) || []
+
+  // Manejar selección de código de ruta
+  const handleCodigoRutaSelect = (codigoruta) => {
+    handleFiltroChange('codigoruta', codigoruta)
+    setCodigoRutaSearchTerm('')
+    setIsCodigoRutaDropdownOpen(false)
+  }
+
+  // Manejar click fuera del dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (codigoRutaDropdownRef.current && !codigoRutaDropdownRef.current.contains(event.target)) {
+        setIsCodigoRutaDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -198,20 +228,85 @@ const ActivacionVendedor = () => {
                 </select>
               </div>
 
-              {/* Filtro Código Ruta */}
-              <div className="flex items-center space-x-2 min-w-0">
+              {/* Filtro Código Ruta con buscador */}
+              <div className="flex items-center space-x-2 relative" ref={codigoRutaDropdownRef}>
                 <MapPin className="w-4 h-4 text-gray-500 flex-shrink-0" />
-                <select 
-                  value={filtrosSeleccionados.codigoruta}
-                  onChange={(e) => handleFiltroChange('codigoruta', e.target.value)}
-                  className="border border-gray-200 rounded px-2 sm:px-3 py-1 text-sm bg-white text-gray-700 focus:border-gray-300 focus:outline-none min-w-0 flex-1 sm:flex-none sm:w-28 md:w-36"
-                  disabled={loading}
-                >
-                  <option value="All">Código Ruta</option>
-                  {filtrosData.codigorutas.map(codigoruta => (
-                    <option key={codigoruta} value={codigoruta}>{codigoruta}</option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <div 
+                    className="border border-gray-200 rounded px-2 sm:px-3 py-1 text-sm bg-white text-gray-700 focus:border-gray-300 cursor-pointer flex items-center justify-between appearance-none w-36"
+                    onClick={() => setIsCodigoRutaDropdownOpen(!isCodigoRutaDropdownOpen)}
+                    style={{ height: '32px' }}
+                  >
+                    <span className="truncate text-sm">
+                      {filtrosSeleccionados.codigoruta === 'All' ? 'Código Ruta' : filtrosSeleccionados.codigoruta}
+                    </span>
+                    <svg className={`w-4 h-4 text-gray-400 transition-transform ${isCodigoRutaDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                  {isCodigoRutaDropdownOpen && (
+                    <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded shadow-lg z-[60] max-h-64 overflow-hidden w-96">
+                      <div className="p-2 border-b border-gray-100">
+                        <div className="relative">
+                          <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400" />
+                          <input
+                            type="text"
+                            placeholder="Buscar código de ruta..."
+                            value={codigoRutaSearchTerm}
+                            onChange={(e) => setCodigoRutaSearchTerm(e.target.value)}
+                            className="w-full pl-7 pr-7 py-1 text-xs border border-gray-200 rounded focus:outline-none focus:border-gray-300"
+                            autoFocus
+                          />
+                          {codigoRutaSearchTerm && (
+                            <button
+                              onClick={() => setCodigoRutaSearchTerm('')}
+                              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      <div className="max-h-48 overflow-y-auto">
+                        {filteredCodigoRutas.length > 0 ? (
+                          <>
+                            <div 
+                              className="px-3 py-2 text-sm hover:bg-gray-50 cursor-pointer border-b border-gray-100"
+                              onClick={() => {
+                                handleFiltroChange('codigoruta', 'All')
+                                setIsCodigoRutaDropdownOpen(false)
+                                setCodigoRutaSearchTerm('')
+                              }}
+                            >
+                              <span className="font-medium text-gray-900">Todos los códigos de ruta</span>
+                            </div>
+                            {filteredCodigoRutas.map(codigoruta => (
+                              <div 
+                                key={codigoruta}
+                                className="px-3 py-2 text-sm hover:bg-gray-50 cursor-pointer"
+                                onClick={() => {
+                                  handleFiltroChange('codigoruta', codigoruta)
+                                  setIsCodigoRutaDropdownOpen(false)
+                                  setCodigoRutaSearchTerm('')
+                                }}
+                              >
+                                {codigoruta}
+                              </div>
+                            ))}
+                          </>
+                        ) : codigoRutaSearchTerm ? (
+                          <div className="px-3 py-2 text-sm text-gray-500 italic">
+                            No se encontraron códigos de ruta que coincidan con "{codigoRutaSearchTerm}"
+                          </div>
+                        ) : (
+                          <div className="px-3 py-2 text-sm text-gray-500 italic">
+                            No hay códigos de ruta disponibles
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 

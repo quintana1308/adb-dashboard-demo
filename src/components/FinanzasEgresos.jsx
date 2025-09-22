@@ -44,7 +44,11 @@ const FinanzasEgresos = () => {
   const [filtrosColapsados, setFiltrosColapsados] = useState(true)
   const [totalGastosGenerales, setTotalGastosGenerales] = useState(0)
 
-  // Buscador de cuenta
+  // Buscadores
+  const [diaSearchTerm, setDiaSearchTerm] = useState('')
+  const [isDiaDropdownOpen, setIsDiaDropdownOpen] = useState(false)
+  const diaDropdownRef = useRef(null)
+
   const [cuentaSearchTerm, setCuentaSearchTerm] = useState('')
   const [isCuentaDropdownOpen, setIsCuentaDropdownOpen] = useState(false)
   const cuentaDropdownRef = useRef(null)
@@ -166,18 +170,31 @@ const FinanzasEgresos = () => {
       centrodecosto: 'All',
       nivelcuenta: 'All'
     })
+    setDiaSearchTerm('')
+    setIsDiaDropdownOpen(false)
     setCuentaSearchTerm('')
     setIsCuentaDropdownOpen(false)
     await fetchFiltros()
     fetchTotalGastosGenerales()
   }
 
-  // Filtrar cuentas basado en el término de búsqueda
+  // Filtrar basado en términos de búsqueda
+  const filteredDias = filtrosData.dias?.filter(d =>
+    (d || '').toLowerCase().includes(diaSearchTerm.toLowerCase()) ||
+    new Date(d).toLocaleDateString().toLowerCase().includes(diaSearchTerm.toLowerCase())
+  ) || []
+
   const filteredCuentas = filtrosData.cuentas?.filter(c =>
     (c || '').toLowerCase().includes(cuentaSearchTerm.toLowerCase())
   ) || []
 
-  // Manejar selección de cuenta
+  // Manejar selecciones
+  const handleDiaSelect = (dia) => {
+    handleFiltroChange('dia', dia)
+    setDiaSearchTerm('')
+    setIsDiaDropdownOpen(false)
+  }
+
   const handleCuentaSelect = (cuenta) => {
     handleFiltroChange('cuenta', cuenta)
     setCuentaSearchTerm('')
@@ -186,6 +203,9 @@ const FinanzasEgresos = () => {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
+      if (diaDropdownRef.current && !diaDropdownRef.current.contains(event.target)) {
+        setIsDiaDropdownOpen(false)
+      }
       if (cuentaDropdownRef.current && !cuentaDropdownRef.current.contains(event.target)) {
         setIsCuentaDropdownOpen(false)
       }
@@ -239,14 +259,14 @@ const FinanzasEgresos = () => {
         {/* Filtros en desktop */}
         <div className={`${filtrosColapsados ? 'hidden' : 'block'} md:block`}>
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-7 gap-3 sm:gap-4 md:gap-3 mt-3 md:mt-0">
+            <div className="flex flex-wrap items-center gap-3 mt-3 md:mt-0 w-full">
               {/* Año */}
-              <div className="flex items-center space-x-2 min-w-0">
+              <div className="flex items-center space-x-2">
                 <Calendar className="w-4 h-4 text-gray-500 flex-shrink-0" />
                 <select 
                   value={filtrosSeleccionados.anio}
                   onChange={(e) => handleFiltroChange('anio', e.target.value)}
-                  className="border border-gray-200 rounded px-2 sm:px-3 py-1 text-sm bg-white text-gray-700 focus:border-gray-300 focus:outline-none min-w-0 flex-1 sm:flex-none sm:w-20"
+                  className="border border-gray-200 rounded px-2 sm:px-3 py-1 text-sm bg-white text-gray-700 focus:border-gray-300 focus:outline-none w-20"
                   disabled={loading}
                 >
                   <option value="All">Año</option>
@@ -255,14 +275,13 @@ const FinanzasEgresos = () => {
                   ))}
                 </select>
               </div>
-
               {/* Mes */}
-              <div className="flex items-center space-x-2 min-w-0">
+              <div className="flex items-center space-x-2">
                 <Calendar className="w-4 h-4 text-gray-500 flex-shrink-0" />
                 <select 
                   value={filtrosSeleccionados.mes}
                   onChange={(e) => handleFiltroChange('mes', e.target.value)}
-                  className="border border-gray-200 rounded px-2 sm:px-3 py-1 text-sm bg-white text-gray-700 focus:border-gray-300 focus:outline-none min-w-0 flex-1 sm:flex-none sm:w-24"
+                  className="border border-gray-200 rounded px-2 sm:px-3 py-1 text-sm bg-white text-gray-700 focus:border-gray-300 focus:outline-none w-20"
                   disabled={loading}
                 >
                   <option value="All">Mes</option>
@@ -271,30 +290,94 @@ const FinanzasEgresos = () => {
                   ))}
                 </select>
               </div>
-
-              {/* Día */}
-              <div className="flex items-center space-x-2 min-w-0">
+              {/* Día con buscador */}
+              <div className="flex items-center space-x-2 relative" ref={diaDropdownRef}>
                 <Calendar className="w-4 h-4 text-gray-500 flex-shrink-0" />
-                <select 
-                  value={filtrosSeleccionados.dia}
-                  onChange={(e) => handleFiltroChange('dia', e.target.value)}
-                  className="border border-gray-200 rounded px-2 sm:px-3 py-1 text-sm bg-white text-gray-700 focus:border-gray-300 focus:outline-none min-w-0 flex-1 sm:flex-none sm:w-24"
-                  disabled={loading}
-                >
-                  <option value="All">Día</option>
-                  {filtrosData.dias?.map(d => (
-                    <option key={d} value={d}>{new Date(d).toLocaleDateString()}</option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <div 
+                    className="border border-gray-200 rounded px-2 sm:px-3 py-1 text-sm bg-white text-gray-700 focus:border-gray-300 cursor-pointer flex items-center justify-between appearance-none w-24"
+                    onClick={() => setIsDiaDropdownOpen(!isDiaDropdownOpen)}
+                    style={{ height: '32px' }}
+                  >
+                    <span className="truncate text-sm">
+                      {filtrosSeleccionados.dia === 'All' ? 'Día' : new Date(filtrosSeleccionados.dia).toLocaleDateString()}
+                    </span>
+                    <svg className={`w-4 h-4 text-gray-400 transition-transform ${isDiaDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                  {isDiaDropdownOpen && (
+                    <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded shadow-lg z-[60] max-h-64 overflow-hidden w-80">
+                      <div className="p-2 border-b border-gray-100">
+                        <div className="relative">
+                          <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400" />
+                          <input
+                            type="text"
+                            placeholder="Buscar día..."
+                            value={diaSearchTerm}
+                            onChange={(e) => setDiaSearchTerm(e.target.value)}
+                            className="w-full pl-7 pr-7 py-1 text-xs border border-gray-200 rounded focus:outline-none focus:border-gray-300"
+                            autoFocus
+                          />
+                          {diaSearchTerm && (
+                            <button
+                              onClick={() => setDiaSearchTerm('')}
+                              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      <div className="max-h-48 overflow-y-auto">
+                        {filteredDias.length > 0 ? (
+                          <>
+                            <div 
+                              className="px-3 py-2 text-sm hover:bg-gray-50 cursor-pointer border-b border-gray-100"
+                              onClick={() => {
+                                handleFiltroChange('dia', 'All')
+                                setIsDiaDropdownOpen(false)
+                                setDiaSearchTerm('')
+                              }}
+                            >
+                              <span className="font-medium text-gray-900">Todos los días</span>
+                            </div>
+                            {filteredDias.map(dia => (
+                              <div 
+                                key={dia}
+                                className="px-3 py-2 text-sm hover:bg-gray-50 cursor-pointer"
+                                onClick={() => {
+                                  handleFiltroChange('dia', dia)
+                                  setIsDiaDropdownOpen(false)
+                                  setDiaSearchTerm('')
+                                }}
+                              >
+                                {new Date(dia).toLocaleDateString()}
+                              </div>
+                            ))}
+                          </>
+                        ) : diaSearchTerm ? (
+                          <div className="px-3 py-2 text-sm text-gray-500 italic">
+                            No se encontraron días que coincidan con "{diaSearchTerm}"
+                          </div>
+                        ) : (
+                          <div className="px-3 py-2 text-sm text-gray-500 italic">
+                            No hay días disponibles
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Clasificación */}
-              <div className="flex items-center space-x-2 min-w-0">
+              <div className="flex items-center space-x-2">
                 <Tag className="w-4 h-4 text-gray-500 flex-shrink-0" />
                 <select 
                   value={filtrosSeleccionados.clasificacion}
                   onChange={(e) => handleFiltroChange('clasificacion', e.target.value)}
-                  className="border border-gray-200 rounded px-2 sm:px-3 py-1 text-sm bg-white text-gray-700 focus:border-gray-300 focus:outline-none min-w-0 flex-1 sm:flex-none sm:w-32"
+                  className="border border-gray-200 rounded px-2 sm:px-3 py-1 text-sm bg-white text-gray-700 focus:border-gray-300 focus:outline-none w-32"
                   disabled={loading}
                 >
                   <option value="All">Clasificación</option>
@@ -303,22 +386,24 @@ const FinanzasEgresos = () => {
                   ))}
                 </select>
               </div>
-
               {/* Cuenta con buscador */}
-              <div className="flex items-center space-x-2 min-w-0 relative" ref={cuentaDropdownRef}>
+              <div className="flex items-center space-x-2 relative" ref={cuentaDropdownRef}>
                 <FileText className="w-4 h-4 text-gray-500 flex-shrink-0" />
-                <div className="relative min-w-0 flex-1 sm:flex-none sm:w-40 md:w-48">
+                <div className="relative">
                   <div 
-                    className="border border-gray-200 rounded px-2 sm:px-3 py-1 text-sm bg-white text-gray-700 focus:border-gray-300 cursor-pointer flex items-center justify-between min-h-[32px]"
+                    className="border border-gray-200 rounded px-2 sm:px-3 py-1 text-sm bg-white text-gray-700 focus:border-gray-300 cursor-pointer flex items-center justify-between appearance-none w-32"
                     onClick={() => setIsCuentaDropdownOpen(!isCuentaDropdownOpen)}
+                    style={{ height: '32px' }}
                   >
-                    <span className="truncate">
+                    <span className="truncate text-sm">
                       {filtrosSeleccionados.cuenta === 'All' ? 'Cuenta' : filtrosSeleccionados.cuenta}
                     </span>
-                    <span className={`w-3 h-3 text-gray-500 ${isCuentaDropdownOpen ? 'rotate-180' : ''}`}>▼</span>
+                    <svg className={`w-4 h-4 text-gray-400 transition-transform ${isCuentaDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
                   </div>
                   {isCuentaDropdownOpen && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded shadow-lg z-50 max-h-64 overflow-hidden">
+                    <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded shadow-lg z-[60] max-h-64 overflow-hidden w-80">
                       <div className="p-2 border-b border-gray-100">
                         <div className="relative">
                           <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400" />
@@ -341,18 +426,32 @@ const FinanzasEgresos = () => {
                         </div>
                       </div>
                       <div className="max-h-48 overflow-y-auto">
-                        <div 
-                          className="px-3 py-2 text-sm hover:bg-gray-50 cursor-pointer border-b border-gray-100"
-                          onClick={() => handleCuentaSelect('All')}
-                        >
-                          <span className="font-medium text-gray-500">Todas las cuentas</span>
-                        </div>
                         {filteredCuentas.length > 0 ? (
-                          filteredCuentas.map(c => (
-                            <div key={c} className="px-3 py-2 text-sm hover:bg-gray-50 cursor-pointer" onClick={() => handleCuentaSelect(c)}>
-                              {c}
+                          <>
+                            <div 
+                              className="px-3 py-2 text-sm hover:bg-gray-50 cursor-pointer border-b border-gray-100"
+                              onClick={() => {
+                                handleFiltroChange('cuenta', 'All')
+                                setIsCuentaDropdownOpen(false)
+                                setCuentaSearchTerm('')
+                              }}
+                            >
+                              <span className="font-medium text-gray-900">Todas las cuentas</span>
                             </div>
-                          ))
+                            {filteredCuentas.map(cuenta => (
+                              <div 
+                                key={cuenta}
+                                className="px-3 py-2 text-sm hover:bg-gray-50 cursor-pointer"
+                                onClick={() => {
+                                  handleFiltroChange('cuenta', cuenta)
+                                  setIsCuentaDropdownOpen(false)
+                                  setCuentaSearchTerm('')
+                                }}
+                              >
+                                {cuenta}
+                              </div>
+                            ))}
+                          </>
                         ) : cuentaSearchTerm ? (
                           <div className="px-3 py-2 text-sm text-gray-500 italic">
                             No se encontraron cuentas que coincidan con "{cuentaSearchTerm}"
@@ -367,14 +466,13 @@ const FinanzasEgresos = () => {
                   )}
                 </div>
               </div>
-
               {/* Centro de Costo */}
-              <div className="flex items-center space-x-2 min-w-0">
+              <div className="flex items-center space-x-2">
                 <Building className="w-4 h-4 text-gray-500 flex-shrink-0" />
                 <select 
                   value={filtrosSeleccionados.centrodecosto}
                   onChange={(e) => handleFiltroChange('centrodecosto', e.target.value)}
-                  className="border border-gray-200 rounded px-2 sm:px-3 py-1 text-sm bg-white text-gray-700 focus:border-gray-300 focus:outline-none min-w-0 flex-1 sm:flex-none sm:w-32"
+                  className="border border-gray-200 rounded px-2 sm:px-3 py-1 text-sm bg-white text-gray-700 focus:border-gray-300 focus:outline-none w-48"
                   disabled={loading}
                 >
                   <option value="All">Centro Costo</option>
@@ -383,14 +481,13 @@ const FinanzasEgresos = () => {
                   ))}
                 </select>
               </div>
-
               {/* Nivel de Cuenta */}
-              <div className="flex items-center space-x-2 min-w-0">
+              <div className="flex items-center space-x-2">
                 <Hash className="w-4 h-4 text-gray-500 flex-shrink-0" />
                 <select 
                   value={filtrosSeleccionados.nivelcuenta}
                   onChange={(e) => handleFiltroChange('nivelcuenta', e.target.value)}
-                  className="border border-gray-200 rounded px-2 sm:px-3 py-1 text-sm bg-white text-gray-700 focus:border-gray-300 focus:outline-none min-w-0 flex-1 sm:flex-none sm:w-24"
+                  className="border border-gray-200 rounded px-2 sm:px-3 py-1 text-sm bg-white text-gray-700 focus:border-gray-300 focus:outline-none w-24"
                   disabled={loading}
                 >
                   <option value="All">Nivel</option>
@@ -399,19 +496,18 @@ const FinanzasEgresos = () => {
                   ))}
                 </select>
               </div>
-            </div>
-
-            {/* Iconos de acción en desktop */}
-            <div className="hidden md:flex items-center space-x-2">
-              <button onClick={refreshAll} className="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Refrescar" style={{ color: '#3b82f6' }}>
-                <RefreshCw className="w-5 h-5" />
-              </button>
-              <button onClick={limpiarFiltros} className="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Limpiar filtros" style={{ color: '#3b82f6' }}>
-                <FilterX className="w-5 h-5" />
-              </button>
-              <button onClick={() => document.documentElement.requestFullscreen()} className="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Pantalla completa" style={{ color: '#3b82f6' }}>
-                <Maximize className="w-5 h-5" />
-              </button>
+              {/* Iconos de acción en desktop */}
+              <div className="hidden md:flex items-center space-x-2 ml-auto">
+                <button onClick={refreshAll} className="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Refrescar" style={{ color: '#3b82f6' }}>
+                  <RefreshCw className="w-5 h-5" />
+                </button>
+                <button onClick={limpiarFiltros} className="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Limpiar filtros" style={{ color: '#3b82f6' }}>
+                  <FilterX className="w-5 h-5" />
+                </button>
+                <button onClick={() => document.documentElement.requestFullscreen()} className="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Pantalla completa" style={{ color: '#3b82f6' }}>
+                  <Maximize className="w-5 h-5" />
+                </button>
+              </div>
             </div>
           </div>
         </div>
