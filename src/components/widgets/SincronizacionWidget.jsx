@@ -3,13 +3,13 @@ import React from 'react'
 const SincronizacionWidget = () => {
   // Datos estáticos basados en la imagen 2
   const aliadosEstaticos = [
-    { nombre: 'Inversiones Aji C.A:', fecha: '01/07/2024' },
-    { nombre: 'La feria del pollo, C.A:', fecha: '02/09/2024' },
-    { nombre: 'Representaciones Samafer, C.A:', fecha: '17/03/2024' },
-    { nombre: 'Frangos de oriente, C.A:', fecha: '01/10/2022' },
-    { nombre: 'Grupo Chargon, C.A:', fecha: '01/08/2021' },
-    { nombre: 'Corporacion agricola ferdan CA:', fecha: '01/05/2024' },
-    { nombre: 'Distribuidora Purolomo CA:', fecha: '01/01/2024' }
+    { nombre: 'Agropecuaria Los Llanos Demo C.A:', fecha: '01/07/2024' },
+    { nombre: 'Avicola Horinzonte Demo C.A:', fecha: '02/09/2024' },
+    { nombre: 'Comercial Valle Demo C.A:', fecha: '17/03/2024' },
+    { nombre: 'Corporativo Estrella Demo C.A:', fecha: '01/10/2022' },
+    { nombre: 'Distribuciones Norte Demo C.A:', fecha: '01/08/2021' },
+    { nombre: 'Mercado Central Demo CA:', fecha: '01/05/2024' },
+    { nombre: 'Distribuidora Mas Dos Demo CA:', fecha: '01/01/2024' }
   ]
 
   return (

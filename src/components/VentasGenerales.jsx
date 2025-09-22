@@ -21,6 +21,7 @@ import {
 import { useNavigate } from 'react-router-dom'
 import Footer from './Footer'
 import DashboardHeader from './DashboardHeader'
+import VentasNavMenu from './VentasNavMenu'
 import FinanzasDataTableWidget from './widgets/FinanzasDataTableWidget'
 
 const VentasGenerales = () => {
@@ -213,17 +214,7 @@ const VentasGenerales = () => {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
       <DashboardHeader title="Ventas - Ventas Generales">
-        <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
-          <button className="text-white border-b-2 border-white pb-1 font-semibold">
-            Ventas Generales
-          </button>
-        </nav>
-        {/* Menú móvil */}
-        <div className="md:hidden">
-          <select className="bg-transparent border border-white/30 rounded px-2 py-1 text-sm text-white" defaultValue="ventas-generales">
-            <option value="ventas-generales" className="text-black">Ventas Generales</option>
-          </select>
-        </div>
+        <VentasNavMenu currentPage="ventas-generales" />
       </DashboardHeader>
 
       {/* Segunda Barra - Filtros e Iconos */}

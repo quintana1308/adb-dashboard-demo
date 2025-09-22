@@ -258,7 +258,7 @@ const FinanzasCobranza = () => {
               </div>
 
               {/* Código Ruta */}
-              <div className="flex items-center space-x-2 min-w-0">
+              <div className="hidden flex items-center space-x-2 min-w-0">
                 <Route className="w-4 h-4 text-gray-500 flex-shrink-0" />
                 <select 
                   value={filtrosSeleccionados.codigoruta}

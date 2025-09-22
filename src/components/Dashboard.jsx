@@ -367,7 +367,7 @@ const Dashboard = () => {
                   </button>
                   <button
                     onClick={() => {
-                      navigate('/dashboard/activacion/activacion-vendedor')
+                      navigate('/dashboard/activacion/vendedor')
                       setShowActivacionDropdown(false)
                     }}
                     className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors flex items-center space-x-3"
